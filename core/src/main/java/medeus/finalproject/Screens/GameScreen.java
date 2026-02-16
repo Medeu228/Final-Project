@@ -5,25 +5,25 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-
 import medeus.finalproject.Entities.Player;
 
-public class Game implements Screen {
+public class GameScreen implements Screen {
 
-    private OrthographicCamera camera;
     private SpriteBatch batch;
+    private OrthographicCamera camera;
     private Player player;
 
-    public Game() {
+    public GameScreen() {
+        batch = new SpriteBatch();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 800, 600);
 
-        batch = new SpriteBatch();
         player = new Player(100, 100);
     }
 
     @Override
     public void render(float delta) {
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         player.update(delta);
