@@ -2,7 +2,8 @@ package medeus.finalproject.Entities;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class Player {
 
@@ -10,12 +11,16 @@ public class Player {
     private float y;
     private float speed = 200;
 
-    private ShapeRenderer shape;
+    private Texture texture;
 
     public Player(float x, float y) {
         this.x = x;
         this.y = y;
-        shape = new ShapeRenderer();
+        texture = new Texture("player.jpg");
+    }
+
+    public void dispose() {
+        texture.dispose();
     }
 
     public void update(float delta) {
@@ -26,13 +31,8 @@ public class Player {
         if (Gdx.input.isKeyPressed(Input.Keys.D)) x += speed * delta;
     }
 
-    public void render(com.badlogic.gdx.graphics.g2d.SpriteBatch batch) {
-        batch.end();
-
-        shape.begin(ShapeRenderer.ShapeType.Filled);
-        shape.rect(x, y, 40, 40);
-        shape.end();
-
-        batch.begin();
+    public void render(SpriteBatch batch) {
+        batch.draw(texture, x, y, 128, 128);
     }
+
 }
