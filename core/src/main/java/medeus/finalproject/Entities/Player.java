@@ -29,6 +29,15 @@ public class Player {
         if (Gdx.input.isKeyPressed(Input.Keys.S)) y -= speed * delta;
         if (Gdx.input.isKeyPressed(Input.Keys.A)) x -= speed * delta;
         if (Gdx.input.isKeyPressed(Input.Keys.D)) x += speed * delta;
+
+        float mapWidth = 1600;
+        float mapHeight = 1600;
+
+        if (x < 0) x = 0;
+        if (y < 0) y = 0;
+        if (x > mapWidth) x = mapWidth;
+        if (y > mapHeight) y = mapHeight;
+
     }
 
     public void render(SpriteBatch batch) {

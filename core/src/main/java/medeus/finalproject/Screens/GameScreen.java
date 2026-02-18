@@ -19,7 +19,7 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 800, 600);
 
-        background = new Texture("lua.png");
+        background = new Texture("background.png");
         background.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 
         player = new Player(100, 100);
@@ -41,9 +41,9 @@ public class GameScreen implements Screen {
         batch.draw(
             background,
             0, 0,          // позиция
-            1000, 1000,    // размер области
+            1600, 1600,    // размер области
             0, 0,          // UV начало
-            10, 10         // сколько раз повторить
+            50, 50         // сколько раз повторить
         );
 
         player.render(batch);
