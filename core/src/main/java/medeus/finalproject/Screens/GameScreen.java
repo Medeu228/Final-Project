@@ -20,6 +20,7 @@ public class GameScreen implements Screen {
         camera.setToOrtho(false, 800, 600);
 
         background = new Texture("lua.png");
+        background.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 
         player = new Player(100, 100);
     }
@@ -37,10 +38,22 @@ public class GameScreen implements Screen {
 
         batch.begin();
 
-        batch.draw(background, 0, 0, 800, 600);
+        batch.draw(
+            background,
+            0, 0,          // позиция
+            1000, 1000,    // размер области
+            0, 0,          // UV начало
+            10, 10         // сколько раз повторить
+        );
+
         player.render(batch);
 
         batch.end();
+
+
+        camera.position.x = player.getX();
+        camera.position.y = player.getY();
+        camera.update();
 
     }
 

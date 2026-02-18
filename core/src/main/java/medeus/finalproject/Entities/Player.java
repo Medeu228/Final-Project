@@ -35,4 +35,8 @@ public class Player {
         batch.draw(texture, x, y, 128, 128);
     }
 
+    public float getX() { return x; }
+    public float getY() { return y; }
+
+
 }
