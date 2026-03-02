@@ -3,7 +3,7 @@ package medeus.finalproject.Entities;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-public abstract class EntitiesAbstract {
+public abstract class EnemyAbstract {
 
     protected float x;
     protected float y;
@@ -15,7 +15,7 @@ public abstract class EntitiesAbstract {
 
     protected Texture texture;
 
-    public EntitiesAbstract(float x, float y) {
+    public EnemyAbstract(float x, float y) {
         this.x = x;
         this.y = y;
         loadStats();
