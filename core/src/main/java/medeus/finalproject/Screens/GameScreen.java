@@ -9,6 +9,10 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import medeus.finalproject.Battle.BattleEngine;
+import medeus.finalproject.Battle.Combatant;
+import medeus.finalproject.Battle.EnemyCombatantAdapter;
+import medeus.finalproject.Battle.HeroCombatantAdapter;
 import medeus.finalproject.Entities.Enemies.Skeleton;
 import medeus.finalproject.Entities.Enemies.Zombie;
 import medeus.finalproject.Entities.EnemyAbstract;
@@ -16,6 +20,7 @@ import medeus.finalproject.Entities.Heroes.Archer;
 import medeus.finalproject.Entities.Heroes.Mage;
 import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 
 public class GameScreen implements Screen {
 
@@ -25,11 +30,16 @@ public class GameScreen implements Screen {
     boolean heroChosen = false;
     private ArrayList<EnemyAbstract> enemies;
     private Random random;
+    private boolean gameOver = false;
+    private BitmapFont font;
 
     public GameScreen() {
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 800, 600);
+
+        font = new BitmapFont();
+        font.setColor(1, 0, 0, 1);
 
         background = new Texture("background.png");
         background.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
@@ -41,8 +51,10 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float delta) {
+
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
 
         if (!heroChosen) {
 
@@ -64,35 +76,58 @@ public class GameScreen implements Screen {
             return;
         }
 
+
+        if (gameOver) {
+            Gdx.gl.glClearColor(0.3f, 0, 0, 1);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            return;
+        }
+
+
         player.update(delta);
-        camera.position.x = player.getX();
-        camera.position.y = player.getY();
-        camera.update();
+
+        camera.position.set(player.getX(), player.getY(), 0);
         camera.update();
         batch.setProjectionMatrix(camera.combined);
 
-        batch.begin();
-
-        batch.draw(
-            background,
-            0, 0,
-            1600, 1600,
-            0, 0,
-            50, 50
-        );
-
-        player.render(batch);
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
             spawnEnemy();
         }
 
+        EnemyAbstract enemyToRemove = null;
+
+        batch.begin();
+
+
+        batch.draw( background, 0, 0, 1600, 1600, 0, 0, 50, 50 );
+
+        font.draw(batch, "HP: " + player.getHp(),
+            camera.position.x - 380,
+            camera.position.y + 280);
+
+
+        player.render(batch);
+
+
         for (EnemyAbstract enemy : enemies) {
+
             enemy.update(delta, player.getX(), player.getY());
+
+            if (player.getHitbox().overlaps(enemy.getHitbox())) {
+                startBattle(enemy);
+                enemyToRemove = enemy;
+                break;
+            }
+
             enemy.render(batch);
         }
 
         batch.end();
+
+        if (enemyToRemove != null) {
+            enemies.remove(enemyToRemove);
+        }
     }
 
     private void spawnEnemy() {
@@ -114,15 +149,30 @@ public class GameScreen implements Screen {
         enemies.add(enemy);
     }
 
+    private void startBattle(EnemyAbstract enemy) {
+
+        Combatant hero =
+            new HeroCombatantAdapter(player);
+
+        Combatant enemyAdapter =
+            new EnemyCombatantAdapter(enemy);
+
+        BattleEngine.getInstance().fight(hero, enemyAdapter);
+
+        if (!hero.isAlive()) {
+            gameOver = true;
+        }
+    }
+
     @Override
     public void dispose() {
         player.dispose();
         batch.dispose();
         background.dispose();
+        font.dispose();
     }
 
     private Texture background;
-
 
 
     @Override public void show() {}
