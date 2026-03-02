@@ -1,11 +1,15 @@
 package medeus.finalproject.Screens;
 
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import medeus.finalproject.Entities.Heroes.Archer;
+import medeus.finalproject.Entities.Heroes.Mage;
+import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
 
 public class GameScreen implements Screen {
@@ -13,6 +17,7 @@ public class GameScreen implements Screen {
     private SpriteBatch batch;
     private OrthographicCamera camera;
     private Player player;
+    private boolean heroChosen = false;
 
     public GameScreen() {
         batch = new SpriteBatch();
@@ -22,7 +27,21 @@ public class GameScreen implements Screen {
         background = new Texture("background.png");
         background.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 
-        player = new Player(100, 100);
+        Player player;
+        boolean heroChosen = false;
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) {
+            player = new Warrior(100, 100);
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) {
+            player = new Archer(100, 100);
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) {
+            player = new Mage(100, 100);
+
+        }
     }
 
 
@@ -30,6 +49,26 @@ public class GameScreen implements Screen {
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        if (!heroChosen) {
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) {
+                player = new Warrior(100, 100);
+                heroChosen = true;
+            }
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) {
+                player = new Archer(100, 100);
+                heroChosen = true;
+            }
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) {
+                player = new Mage(100, 100);
+                heroChosen = true;
+            }
+
+            return;
+        }
 
         player.update(delta);
 
@@ -40,10 +79,10 @@ public class GameScreen implements Screen {
 
         batch.draw(
             background,
-            0, 0,          // позиция
-            1600, 1600,    // размер области
-            0, 0,          // UV начало
-            50, 50         // сколько раз повторить
+            0, 0,
+            1600, 1600,
+            0, 0,
+            50, 50
         );
 
         player.render(batch);

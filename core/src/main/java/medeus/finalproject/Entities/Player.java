@@ -5,35 +5,39 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-public class Player {
+public abstract class Player {
 
-    private float x;
-    private float y;
-    private float speed = 200;
+    protected float x;
+    protected float y;
+    protected float speed = 200;
 
-    private Texture texture;
+    protected int hp;
+    protected int attack;
+
+    protected Texture texture;
 
     public Player(float x, float y) {
         this.x = x;
         this.y = y;
-        texture = new Texture("player.jpg");
+        loadStats();
+        loadTexture();
     }
 
-    public void dispose() {
-        texture.dispose();
-    }
+    protected abstract void loadStats();
+    protected abstract void loadTexture();
 
     public void update(float delta) {
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) y += speed * delta;
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) y -= speed * delta;
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) x -= speed * delta;
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) x += speed * delta;
+        float currentSpeed = speed;
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W) && Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) y += speed * delta * 2;
-        if (Gdx.input.isKeyPressed(Input.Keys.S) && Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) y -= speed * delta * 2;
-        if (Gdx.input.isKeyPressed(Input.Keys.A) && Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) x -= speed * delta * 2;
-        if (Gdx.input.isKeyPressed(Input.Keys.D) && Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) x += speed * delta * 2;
+        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) {
+            currentSpeed *= 2;
+        }
+
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) y += currentSpeed * delta;
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) y -= currentSpeed * delta;
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) x -= currentSpeed * delta;
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) x += currentSpeed * delta;
 
         float mapWidth = 1600;
         float mapHeight = 1600;
@@ -42,15 +46,19 @@ public class Player {
         if (y < 0) y = 0;
         if (x > mapWidth) x = mapWidth;
         if (y > mapHeight) y = mapHeight;
-
     }
 
     public void render(SpriteBatch batch) {
         batch.draw(texture, x, y, 128, 128);
     }
 
+    public void dispose() {
+        texture.dispose();
+    }
+
     public float getX() { return x; }
     public float getY() { return y; }
 
-
+    public int getHp() { return hp; }
+    public int getAttack() { return attack; }
 }
