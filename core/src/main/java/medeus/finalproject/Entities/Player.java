@@ -30,6 +30,11 @@ public class Player {
         if (Gdx.input.isKeyPressed(Input.Keys.A)) x -= speed * delta;
         if (Gdx.input.isKeyPressed(Input.Keys.D)) x += speed * delta;
 
+        if (Gdx.input.isKeyPressed(Input.Keys.W) && Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) y += speed * delta * 2;
+        if (Gdx.input.isKeyPressed(Input.Keys.S) && Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) y -= speed * delta * 2;
+        if (Gdx.input.isKeyPressed(Input.Keys.A) && Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) x -= speed * delta * 2;
+        if (Gdx.input.isKeyPressed(Input.Keys.D) && Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT)) x += speed * delta * 2;
+
         float mapWidth = 1600;
         float mapHeight = 1600;
 
