@@ -1,5 +1,7 @@
 package medeus.finalproject.Screens;
 
+import java.util.ArrayList;
+import java.util.Random;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
@@ -7,6 +9,9 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import medeus.finalproject.Entities.Enemies.Skeleton;
+import medeus.finalproject.Entities.Enemies.Zombie;
+import medeus.finalproject.Entities.EnemyAbstract;
 import medeus.finalproject.Entities.Heroes.Archer;
 import medeus.finalproject.Entities.Heroes.Mage;
 import medeus.finalproject.Entities.Heroes.Warrior;
@@ -16,8 +21,10 @@ public class GameScreen implements Screen {
 
     private SpriteBatch batch;
     private OrthographicCamera camera;
-    private Player player;
-    private boolean heroChosen = false;
+    Player player;
+    boolean heroChosen = false;
+    private ArrayList<EnemyAbstract> enemies;
+    private Random random;
 
     public GameScreen() {
         batch = new SpriteBatch();
@@ -27,21 +34,8 @@ public class GameScreen implements Screen {
         background = new Texture("background.png");
         background.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 
-        Player player;
-        boolean heroChosen = false;
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) {
-            player = new Warrior(100, 100);
-        }
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) {
-            player = new Archer(100, 100);
-        }
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) {
-            player = new Mage(100, 100);
-
-        }
+        enemies = new ArrayList<>();
+        random = new Random();
     }
 
 
@@ -71,7 +65,9 @@ public class GameScreen implements Screen {
         }
 
         player.update(delta);
-
+        camera.position.x = player.getX();
+        camera.position.y = player.getY();
+        camera.update();
         camera.update();
         batch.setProjectionMatrix(camera.combined);
 
@@ -87,13 +83,35 @@ public class GameScreen implements Screen {
 
         player.render(batch);
 
+        if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+            spawnEnemy();
+        }
+
+        for (EnemyAbstract enemy : enemies) {
+            enemy.update(delta, player.getX(), player.getY());
+            enemy.render(batch);
+        }
+
         batch.end();
+    }
 
+    private void spawnEnemy() {
 
-        camera.position.x = player.getX();
-        camera.position.y = player.getY();
-        camera.update();
+        float mapWidth = 1600;
+        float mapHeight = 1600;
 
+        float x = random.nextFloat() * mapWidth;
+        float y = random.nextFloat() * mapHeight;
+
+        EnemyAbstract enemy;
+
+        if (random.nextBoolean()) {
+            enemy = new Zombie(x, y);
+        } else {
+            enemy = new Skeleton(x, y);
+        }
+
+        enemies.add(enemy);
     }
 
     @Override

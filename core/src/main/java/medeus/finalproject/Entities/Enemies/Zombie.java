@@ -17,6 +17,6 @@ public class Zombie extends EnemyAbstract {
 
     @Override
     protected void loadTexture() {
-        texture = new Texture("goblin.png");
+        texture = new Texture("Zombie.jpeg");
     }
 }

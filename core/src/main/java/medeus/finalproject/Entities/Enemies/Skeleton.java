@@ -17,6 +17,6 @@ public class Skeleton extends EnemyAbstract {
 
     @Override
     protected void loadTexture() {
-        texture = new Texture("goblin.png");
+        texture = new Texture("Skeleton.jpeg");
     }
 }
