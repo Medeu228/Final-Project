@@ -33,6 +33,10 @@ public class GameScreen implements Screen {
     private boolean gameOver = false;
     private BitmapFont font;
 
+    private Texture warriorPreview;
+    private Texture archerPreview;
+    private Texture magePreview;
+
     public GameScreen() {
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
@@ -46,6 +50,10 @@ public class GameScreen implements Screen {
 
         enemies = new ArrayList<>();
         random = new Random();
+
+        warriorPreview = new Texture("Warrior.jpeg");
+        archerPreview = new Texture("Archer.jpeg");
+        magePreview = new Texture("Mage.jpeg");
     }
 
 
@@ -56,7 +64,24 @@ public class GameScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 
+
         if (!heroChosen) {
+
+            Gdx.gl.glClearColor(0, 0, 0, 1);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+            batch.setProjectionMatrix(camera.combined);
+            batch.begin();
+
+            batch.draw(warriorPreview, 200, 300, 128, 128);
+            batch.draw(archerPreview, 350, 300, 128, 128);
+            batch.draw(magePreview, 500, 300, 128, 128);
+
+            font.draw(batch, "Press 1 - Warrior", 200, 270);
+            font.draw(batch, "Press 2 - Archer", 350, 270);
+            font.draw(batch, "Press 3 - Mage", 500, 270);
+
+            batch.end();
 
             if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) {
                 player = new Warrior(100, 100);
@@ -170,6 +195,9 @@ public class GameScreen implements Screen {
         batch.dispose();
         background.dispose();
         font.dispose();
+        warriorPreview.dispose();
+        archerPreview.dispose();
+        magePreview.dispose();
     }
 
     private Texture background;
