@@ -21,8 +21,11 @@ import medeus.finalproject.Entities.Heroes.Mage;
 import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import medeus.finalproject.Main;
 
 public class GameScreen implements Screen {
+
+    private final Main game;
 
     private SpriteBatch batch;
     private OrthographicCamera camera;
@@ -37,7 +40,9 @@ public class GameScreen implements Screen {
     private Texture archerPreview;
     private Texture magePreview;
 
-    public GameScreen() {
+    public GameScreen(final Main game) {
+        this.game = game; // Сохраняем ссылку
+
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 800, 600);
@@ -45,8 +50,8 @@ public class GameScreen implements Screen {
         font = new BitmapFont();
         font.setColor(1, 0, 0, 1);
 
+        // ВАЖНО: убедитесь, что файлы лежат в assets
         background = new Texture("background.png");
-        background.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 
         enemies = new ArrayList<>();
         random = new Random();
