@@ -5,6 +5,9 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public abstract class Player {
 
@@ -16,20 +19,39 @@ public abstract class Player {
     protected Texture texture;
     protected Rectangle bounds;
     protected Rectangle hitbox;
+    protected Texture spriteSheet;
+    protected TextureRegion[][] splitFrames;
+    protected Animation<TextureRegion> idleAnimation;
+    protected Animation<TextureRegion> walkAnimation;
+    protected float stateTime;
+    protected boolean moving;
+    protected abstract void loadStats();
+    protected abstract void loadAnimation();
+    protected Animation<TextureRegion> walkDown;
+    protected Animation<TextureRegion> walkLeft;
+    protected Animation<TextureRegion> walkRight;
+    protected Animation<TextureRegion> walkUp;
+
+    protected TextureRegion idleDown;
+    protected TextureRegion idleLeft;
+    protected TextureRegion idleRight;
+    protected TextureRegion idleUp;
+
+    protected String direction = "down";
+
 
     public Player(float x, float y) {
         this.x = x;
         this.y = y;
         loadStats();
-        loadTexture();
+        loadAnimation();
 
         hitbox = new Rectangle(x, y, 128, 128);
     }
 
-    protected abstract void loadStats();
-    protected abstract void loadTexture();
-
     public void update(float delta) {
+        stateTime += delta;
+        moving = false;
 
         float currentSpeed = speed;
 
@@ -37,10 +59,26 @@ public abstract class Player {
             currentSpeed *= 2;
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.W)) y += currentSpeed * delta;
-        if (Gdx.input.isKeyPressed(Input.Keys.S)) y -= currentSpeed * delta;
-        if (Gdx.input.isKeyPressed(Input.Keys.A)) x -= currentSpeed * delta;
-        if (Gdx.input.isKeyPressed(Input.Keys.D)) x += currentSpeed * delta;
+        if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+            y += currentSpeed * delta;
+            moving = true;
+            direction = "up";
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+            y -= currentSpeed * delta;
+            moving = true;
+            direction = "down";
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+            x -= currentSpeed * delta;
+            moving = true;
+            direction = "left";
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+            x += currentSpeed * delta;
+            moving = true;
+            direction = "right";
+        }
 
         float mapWidth = 1600;
         float mapHeight = 1600;
@@ -54,11 +92,44 @@ public abstract class Player {
     }
 
     public void render(SpriteBatch batch) {
-        batch.draw(texture, x, y, 128, 128);
-    }
+        TextureRegion currentFrame;
 
+        if (moving) {
+            switch (direction) {
+                case "up":
+                    currentFrame = walkUp.getKeyFrame(stateTime, true);
+                    break;
+                case "left":
+                    currentFrame = walkLeft.getKeyFrame(stateTime, true);
+                    break;
+                case "right":
+                    currentFrame = walkRight.getKeyFrame(stateTime, true);
+                    break;
+                default:
+                    currentFrame = walkDown.getKeyFrame(stateTime, true);
+                    break;
+            }
+        } else {
+            switch (direction) {
+                case "up":
+                    currentFrame = idleUp;
+                    break;
+                case "left":
+                    currentFrame = idleLeft;
+                    break;
+                case "right":
+                    currentFrame = idleRight;
+                    break;
+                default:
+                    currentFrame = idleDown;
+                    break;
+            }
+        }
+
+        batch.draw(currentFrame, x, y, 128, 128);
+    }
     public void dispose() {
-        texture.dispose();
+        spriteSheet.dispose();
     }
 
     public float getX() { return x; }

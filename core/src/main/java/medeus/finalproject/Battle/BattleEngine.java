@@ -1,6 +1,6 @@
 package medeus.finalproject.Battle;
 
-import medeus.finalproject.Battle.Combatant;
+import medeus.finalproject.Battle.Combatant;    
 
 public class BattleEngine {
 
