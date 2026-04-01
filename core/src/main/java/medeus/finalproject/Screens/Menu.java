@@ -37,9 +37,7 @@ public class Menu implements Screen {
         startButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                // ПОДСТРАИВАЕМСЯ ПОД ТВОР КOD: вызываем пустой конструктор
-                game.setScreen(new GameScreen());
-            }
+                game.setScreen(new Loading(game, new GameScreen(game), 2f));            }
         });
 
         exitButton.addListener(new ChangeListener() {
@@ -55,7 +53,6 @@ public class Menu implements Screen {
 
     private void createBasicSkin() {
         skin = new Skin();
-        // Используем стандартный шрифт LibGDX (проверь наличие файла в assets)
         BitmapFont font = new BitmapFont();
         skin.add("default-font", font);
 

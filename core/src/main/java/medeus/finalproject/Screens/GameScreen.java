@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import medeus.finalproject.Main;
 import medeus.finalproject.Battle.BattleEngine;
 import medeus.finalproject.Battle.Combatant;
 import medeus.finalproject.Battle.EnemyCombatantAdapter;
@@ -20,14 +22,15 @@ import medeus.finalproject.Entities.Heroes.Archer;
 import medeus.finalproject.Entities.Heroes.Mage;
 import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 
 public class GameScreen implements Screen {
 
+    private Main game;
+
     private SpriteBatch batch;
     private OrthographicCamera camera;
-    Player player;
-    boolean heroChosen = false;
+    private Player player;
+    private boolean heroChosen = false;
     private ArrayList<EnemyAbstract> enemies;
     private Random random;
     private boolean gameOver = false;
@@ -36,8 +39,11 @@ public class GameScreen implements Screen {
     private Texture warriorPreview;
     private Texture archerPreview;
     private Texture magePreview;
+    private Texture background;
 
-    public GameScreen() {
+    public GameScreen(Main game) {
+        this.game = game;
+
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 800, 600);
@@ -56,20 +62,12 @@ public class GameScreen implements Screen {
         magePreview = new Texture("Mage.jpeg");
     }
 
-
     @Override
     public void render(float delta) {
-
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-
-
         if (!heroChosen) {
-
-            Gdx.gl.glClearColor(0, 0, 0, 1);
-            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
             batch.setProjectionMatrix(camera.combined);
             batch.begin();
 
@@ -101,20 +99,22 @@ public class GameScreen implements Screen {
             return;
         }
 
-
         if (gameOver) {
             Gdx.gl.glClearColor(0.3f, 0, 0, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                game.setScreen(new Loading(game, new Menu(game), 2f));
+                dispose();
+            }
             return;
         }
-
 
         player.update(delta);
 
         camera.position.set(player.getX(), player.getY(), 0);
         camera.update();
         batch.setProjectionMatrix(camera.combined);
-
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.E)) {
             spawnEnemy();
@@ -124,19 +124,15 @@ public class GameScreen implements Screen {
 
         batch.begin();
 
-
-        batch.draw( background, 0, 0, 1600, 1600, 0, 0, 50, 50 );
+        batch.draw(background, 0, 0, 1600, 1600, 0, 0, 50, 50);
 
         font.draw(batch, "HP: " + player.getHp(),
             camera.position.x - 380,
             camera.position.y + 280);
 
-
         player.render(batch);
 
-
         for (EnemyAbstract enemy : enemies) {
-
             enemy.update(delta, player.getX(), player.getY());
 
             if (player.getHitbox().overlaps(enemy.getHitbox())) {
@@ -156,7 +152,6 @@ public class GameScreen implements Screen {
     }
 
     private void spawnEnemy() {
-
         float mapWidth = 1600;
         float mapHeight = 1600;
 
@@ -175,12 +170,8 @@ public class GameScreen implements Screen {
     }
 
     private void startBattle(EnemyAbstract enemy) {
-
-        Combatant hero =
-            new HeroCombatantAdapter(player);
-
-        Combatant enemyAdapter =
-            new EnemyCombatantAdapter(enemy);
+        Combatant hero = new HeroCombatantAdapter(player);
+        Combatant enemyAdapter = new EnemyCombatantAdapter(enemy);
 
         BattleEngine.getInstance().fight(hero, enemyAdapter);
 
@@ -191,7 +182,9 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
-        player.dispose();
+        if (player != null) {
+            player.dispose();
+        }
         batch.dispose();
         background.dispose();
         font.dispose();
@@ -199,9 +192,6 @@ public class GameScreen implements Screen {
         archerPreview.dispose();
         magePreview.dispose();
     }
-
-    private Texture background;
-
 
     @Override public void show() {}
     @Override public void resize(int width, int height) {}
