@@ -117,15 +117,13 @@ public class devScreen implements Screen {
 
         if (player.getHp() <= 0) {
             gameOver = true;
-            batch.end();
             return;
         }
 
         camera.position.set(player.getX(), player.getY(), 0);
         camera.update();
         batch.setProjectionMatrix(camera.combined);
-
-        batch.end();
+        
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
