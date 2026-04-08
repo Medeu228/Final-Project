@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import medeus.finalproject.Entities.Player;
 
 
 public abstract class EnemyAbstract {
@@ -34,6 +35,9 @@ public abstract class EnemyAbstract {
     protected boolean moving;
     protected String direction = "down";
 
+    protected float attackCooldown = 1.5f;
+    protected float attackTimer = 0f;
+
     public EnemyAbstract(float x, float y) {
         this.x = x;
         this.y = y;
@@ -46,6 +50,9 @@ public abstract class EnemyAbstract {
     protected abstract void loadAnimation();
 
     public void update(float delta, float playerX, float playerY) {
+
+        if (attackTimer > 0) attackTimer -= delta;
+
         stateTime += delta;
         moving = false;
 
@@ -75,6 +82,15 @@ public abstract class EnemyAbstract {
         }
 
         hitbox.setPosition(x, y);
+    }
+
+    public boolean tryAttackPlayer(Player player) {
+        if (getHitbox().overlaps(player.getHitbox()) && attackTimer <= 0) {
+            player.takeDamage(attack);
+            attackTimer = attackCooldown;
+            return true;
+        }
+        return false;
     }
 
     public void render(SpriteBatch batch) {
