@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import java.util.List;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public abstract class Player {
 
@@ -39,6 +40,8 @@ public abstract class Player {
         loadAnimation();
         hitbox = new Rectangle(x, y, 128, 128);
     }
+
+    public abstract void renderAttackRange(ShapeRenderer sr);
 
     public void update(float delta) {
         stateTime += delta;

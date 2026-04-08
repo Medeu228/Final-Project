@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import medeus.finalproject.Entities.EnemyAbstract;
 import medeus.finalproject.Entities.Player;
 import java.util.List;
@@ -80,5 +81,11 @@ public class Mage extends Player {
         TextureRegion[] u = {splitFrames[3][1], splitFrames[3][2], splitFrames[3][3]};
         walkDown = new Animation<>(0.15f, d); walkLeft = new Animation<>(0.15f, l);
         walkRight = new Animation<>(0.15f, r); walkUp = new Animation<>(0.15f, u);
+    }
+
+    @Override
+    public void renderAttackRange(ShapeRenderer sr) {
+        sr.setColor(1, 0.3f, 0.3f, 0.3f); // красный
+        sr.circle(x + 64, y + 64, 175f);
     }
 }

@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import medeus.finalproject.Main;
 import medeus.finalproject.Entities.Enemies.Skeleton;
 import medeus.finalproject.Entities.Enemies.Zombie;
@@ -31,6 +32,7 @@ public class devScreen implements Screen {
     private Random random;
     private boolean gameOver = false;
     private BitmapFont font;
+    private ShapeRenderer shapeRenderer;
 
     private Texture warriorPreview;
     private Texture archerPreview;
@@ -54,6 +56,8 @@ public class devScreen implements Screen {
         warriorPreview = new Texture("Warrior.jpeg");
         archerPreview  = new Texture("Archer.jpeg");
         magePreview    = new Texture("Mage.jpeg");
+
+        shapeRenderer = new ShapeRenderer();
 
         testingrange = new TestingRange();
     }
@@ -113,12 +117,25 @@ public class devScreen implements Screen {
 
         if (player.getHp() <= 0) {
             gameOver = true;
+            batch.end();
             return;
         }
 
         camera.position.set(player.getX(), player.getY(), 0);
         camera.update();
         batch.setProjectionMatrix(camera.combined);
+
+        batch.end();
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        player.renderAttackRange(shapeRenderer);
+        shapeRenderer.end();
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
 
         batch.begin();
 
@@ -156,6 +173,7 @@ public class devScreen implements Screen {
         archerPreview.dispose();
         magePreview.dispose();
         testingrange.dispose();
+        shapeRenderer.dispose();
     }
 
     @Override public void show() {}
