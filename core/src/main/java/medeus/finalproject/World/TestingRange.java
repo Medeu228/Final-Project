@@ -3,11 +3,11 @@ package medeus.finalproject.World;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-public class OverWorld {
+public class TestingRange {
 
     private Texture background;
 
-    public OverWorld() {
+    public TestingRange() {
         background = new Texture("background.png");
         background.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
     }

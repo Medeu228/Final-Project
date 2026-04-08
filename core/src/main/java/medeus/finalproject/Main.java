@@ -8,6 +8,11 @@ import medeus.finalproject.Screens.GameScreen;
 public class Main extends Game{
 
     public Batch batch;
+    public boolean devMode = true;
+
+    public boolean godMode = false;
+    public boolean freeSpawn = false;
+    public boolean showDebugInfo = false;
 
     @Override
     public void create() {

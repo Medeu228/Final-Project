@@ -32,12 +32,39 @@ public class Menu implements Screen {
         stage.addActor(table);
 
         TextButton startButton = new TextButton("START GAME", skin);
+        TextButton devButton = new TextButton("DEV MODE: OFF", skin);
+
+        if (game.devMode) {
+            devButton.setText("DEV MODE: ON");
+        } else {
+            devButton.setText("DEV MODE: OFF");
+        }
         TextButton exitButton = new TextButton("EXIT", skin);
 
         startButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                game.setScreen(new Loading(game, new GameScreen(game), 2f));            }
+                if (game.devMode) {
+                    game.setScreen(new Loading(game, new devScreen(game), 2f));
+                } else {
+                    game.setScreen(new Loading(game, new GameScreen(game), 2f));
+                }
+            }
+        });
+
+        devButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                game.devMode = !game.devMode;
+
+                if (game.devMode) {
+                    devButton.setText("DEV MODE: ON");
+                } else {
+                    devButton.setText("DEV MODE: OFF");
+                }
+
+                System.out.println("devMode = " + game.devMode);
+            }
         });
 
         exitButton.addListener(new ChangeListener() {
@@ -48,6 +75,7 @@ public class Menu implements Screen {
         });
 
         table.add(startButton).fillX().uniformX().pad(10).row();
+        table.add(devButton).fillX().uniformX().pad(10).row();
         table.add(exitButton).fillX().uniformX().pad(10);
     }
 
