@@ -49,6 +49,12 @@ public abstract class EnemyAbstract {
     protected abstract void loadStats();
     protected abstract void loadAnimation();
 
+
+    public void applyDifficultyScale(float multiplier) {
+        hp     = Math.round(hp     * multiplier);
+        attack = Math.round(attack * multiplier);
+    }
+
     public void update(float delta, float playerX, float playerY) {
 
         if (attackTimer > 0) attackTimer -= delta;
@@ -98,33 +104,17 @@ public abstract class EnemyAbstract {
 
         if (moving) {
             switch (direction) {
-                case "up":
-                    currentFrame = walkUp.getKeyFrame(stateTime, true);
-                    break;
-                case "left":
-                    currentFrame = walkLeft.getKeyFrame(stateTime, true);
-                    break;
-                case "right":
-                    currentFrame = walkRight.getKeyFrame(stateTime, true);
-                    break;
-                default:
-                    currentFrame = walkDown.getKeyFrame(stateTime, true);
-                    break;
+                case "up":    currentFrame = walkUp.getKeyFrame(stateTime, true);    break;
+                case "left":  currentFrame = walkLeft.getKeyFrame(stateTime, true);  break;
+                case "right": currentFrame = walkRight.getKeyFrame(stateTime, true); break;
+                default:      currentFrame = walkDown.getKeyFrame(stateTime, true);  break;
             }
         } else {
             switch (direction) {
-                case "up":
-                    currentFrame = idleUp;
-                    break;
-                case "left":
-                    currentFrame = idleLeft;
-                    break;
-                case "right":
-                    currentFrame = idleRight;
-                    break;
-                default:
-                    currentFrame = idleDown;
-                    break;
+                case "up":    currentFrame = idleUp;    break;
+                case "left":  currentFrame = idleLeft;  break;
+                case "right": currentFrame = idleRight; break;
+                default:      currentFrame = idleDown;  break;
             }
         }
 
@@ -143,6 +133,6 @@ public abstract class EnemyAbstract {
         return hitbox;
     }
 
-    public int getHp() { return hp; }
+    public int getHp()     { return hp; }
     public int getAttack() { return attack; }
 }

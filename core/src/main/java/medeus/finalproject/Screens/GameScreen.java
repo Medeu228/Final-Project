@@ -20,15 +20,24 @@ import medeus.finalproject.Entities.Heroes.Mage;
 import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
 import medeus.finalproject.World.OverWorld;
+import medeus.finalproject.World.SpawnTrigger;
 
 public class GameScreen implements Screen {
 
+    private static final float MAP_WIDTH  = 1600f;
+    private static final float MAP_HEIGHT = 1600f;
+
+    private static final int[]   ENEMY_COUNT = { 0, 10, 20, 30 };
+    private static final float[] DIFF_SCALE  = { 0, 1.0f, 1.2f, 1.4f };
+
     private Main game;
+    private int level;
 
     private SpriteBatch batch;
     private OrthographicCamera camera;
     private Player player;
-    private boolean heroChosen = false;
+    private boolean heroChosen   = false;
+    private boolean waveStarted  = false;
     private ArrayList<EnemyAbstract> enemies;
     private Random random;
     private boolean gameOver = false;
@@ -40,15 +49,11 @@ public class GameScreen implements Screen {
     private Texture magePreview;
 
     private OverWorld overWorld;
+    private SpawnTrigger spawnTrigger;
 
-    private static final float[][] SPAWN_POINTS = {
-        {300, 1300}, {800, 1400}, {1400, 1200},
-        {1500, 600}, {1200, 200}, {600, 100},
-        {100, 500},  {200, 900}, {1000, 800}
-    };
-
-    public GameScreen(Main game) {
-        this.game = game;
+    public GameScreen(Main game, int level) {
+        this.game  = game;
+        this.level = level;
 
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
@@ -58,15 +63,18 @@ public class GameScreen implements Screen {
         font.setColor(1, 0, 0, 1);
 
         shapeRenderer = new ShapeRenderer();
-
         enemies = new ArrayList<>();
-        random = new Random();
+        random  = new Random();
 
         warriorPreview = new Texture("Warrior.jpeg");
         archerPreview  = new Texture("Archer.jpeg");
         magePreview    = new Texture("Mage.jpeg");
 
-        overWorld = new OverWorld();
+        overWorld = new OverWorld(level);
+
+        if (level == 1) {
+            spawnTrigger = new SpawnTrigger(MAP_WIDTH, MAP_HEIGHT);
+        }
     }
 
     @Override
@@ -83,24 +91,48 @@ public class GameScreen implements Screen {
             font.draw(batch, "Press 1 - Warrior", 200, 270);
             font.draw(batch, "Press 2 - Archer",  350, 270);
             font.draw(batch, "Press 3 - Mage",    500, 270);
+            font.draw(batch, "Level " + level,    370, 350);
             batch.end();
 
-            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) { player = new Warrior(100, 100); heroChosen = true; spawnInitialEnemies(); }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) { player = new Archer(100, 100);  heroChosen = true; spawnInitialEnemies(); }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) { player = new Mage(100, 100);    heroChosen = true; spawnInitialEnemies(); }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) { player = new Warrior(100, 100); startLevel(); }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) { player = new Archer(100, 100);  startLevel(); }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) { player = new Mage(100, 100);    startLevel(); }
             return;
         }
 
         if (gameOver) {
             Gdx.gl.glClearColor(0.3f, 0, 0, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
             batch.setProjectionMatrix(camera.combined);
             batch.begin();
             font.draw(batch, "GAME OVER", 350, 320);
             font.draw(batch, "ESC - вернуться в меню", 300, 290);
             batch.end();
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                game.setScreen(new Loading(game, new Menu(game), 2f));
+                dispose();
+            }
+            return;
+        }
 
+        if (waveStarted && enemies.isEmpty()) {
+            Gdx.gl.glClearColor(0, 0.3f, 0, 1);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+            batch.setProjectionMatrix(camera.combined);
+            batch.begin();
+            font.draw(batch, "LEVEL " + level + " COMPLETE!", 310, 330);
+            if (level < 3) {
+                font.draw(batch, "ENTER - следующий уровень", 290, 300);
+            } else {
+                font.draw(batch, "Вы прошли игру!", 320, 300);
+            }
+            font.draw(batch, "ESC - в меню", 350, 270);
+            batch.end();
+
+            if (level < 3 && Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
+                game.setScreen(new Loading(game, new GameScreen(game, level + 1), 2f));
+                dispose();
+            }
             if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
                 game.setScreen(new Loading(game, new Menu(game), 2f));
                 dispose();
@@ -109,6 +141,13 @@ public class GameScreen implements Screen {
         }
 
         player.update(delta);
+
+        if (level == 1 && spawnTrigger != null && !waveStarted) {
+            if (spawnTrigger.checkActivation(player.getX(), player.getY())) {
+                spawnEnemies();
+                waveStarted = true;
+            }
+        }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
             player.performAttack(enemies);
@@ -137,7 +176,15 @@ public class GameScreen implements Screen {
 
         overWorld.render(batch);
 
+        if (level == 1 && spawnTrigger != null) {
+            spawnTrigger.render(batch, font, player.getX(), player.getY());
+        }
+
         player.renderHUD(batch, font, camera.position.x, camera.position.y);
+        font.draw(batch, "Level: " + level,          camera.position.x + 200, camera.position.y + 280);
+        if (waveStarted) {
+            font.draw(batch, "Enemies: " + enemies.size(), camera.position.x + 200, camera.position.y + 250);
+        }
 
         player.render(batch);
 
@@ -150,11 +197,31 @@ public class GameScreen implements Screen {
         batch.end();
     }
 
-    private void spawnInitialEnemies() {
-        for (float[] point : SPAWN_POINTS) {
+
+    private void startLevel() {
+        heroChosen = true;
+        if (level > 1) {
+            spawnEnemies();
+            waveStarted = true;
+        }
+    }
+
+    private void spawnEnemies() {
+        int count   = ENEMY_COUNT[level];
+        float scale = DIFF_SCALE[level];
+
+        for (int i = 0; i < count; i++) {
+            float x, y;
+            do {
+                x = 100 + random.nextFloat() * 1400;
+                y = 100 + random.nextFloat() * 1400;
+            } while (Math.abs(x - 100) < 300 && Math.abs(y - 100) < 300);
+
             EnemyAbstract enemy = random.nextBoolean()
-                ? new Zombie(point[0], point[1])
-                : new Skeleton(point[0], point[1]);
+                ? new Zombie(x, y)
+                : new Skeleton(x, y);
+
+            enemy.applyDifficultyScale(scale);
             enemies.add(enemy);
         }
     }
@@ -169,6 +236,7 @@ public class GameScreen implements Screen {
         archerPreview.dispose();
         magePreview.dispose();
         overWorld.dispose();
+        if (spawnTrigger != null) spawnTrigger.dispose();
     }
 
     @Override public void show() {}

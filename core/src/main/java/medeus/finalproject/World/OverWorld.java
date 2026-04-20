@@ -7,8 +7,15 @@ public class OverWorld {
 
     private Texture background;
 
-    public OverWorld() {
-        background = new Texture("background.png");
+
+    public OverWorld(int level) {
+        String textureName;
+        switch (level) {
+            case 2:  textureName = "background2.png"; break;
+            case 3:  textureName = "background3.png"; break;
+            default: textureName = "background.png";  break;
+        }
+        background = new Texture(textureName);
         background.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
     }
 

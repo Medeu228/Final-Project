@@ -47,7 +47,7 @@ public class Menu implements Screen {
                 if (game.devMode) {
                     game.setScreen(new Loading(game, new devScreen(game), 2f));
                 } else {
-                    game.setScreen(new Loading(game, new GameScreen(game), 2f));
+                    game.setScreen(new Loading(game, new GameScreen(game, 1), 2f));
                 }
             }
         });
