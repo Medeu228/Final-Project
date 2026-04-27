@@ -21,6 +21,7 @@ import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
 import medeus.finalproject.World.OverWorld;
 import medeus.finalproject.World.SpawnTrigger;
+import medeus.finalproject.World.Nether;
 
 public class GameScreen implements Screen {
 
@@ -50,6 +51,7 @@ public class GameScreen implements Screen {
 
     private OverWorld overWorld;
     private SpawnTrigger spawnTrigger;
+    private Nether nether;
 
     public GameScreen(Main game, int level) {
         this.game  = game;
@@ -71,6 +73,10 @@ public class GameScreen implements Screen {
         magePreview    = new Texture("Mage.jpeg");
 
         overWorld = new OverWorld(level);
+
+        if (level == 3) {
+            nether = new Nether();
+        }
 
         if (level == 1) {
             spawnTrigger = new SpawnTrigger(MAP_WIDTH, MAP_HEIGHT);
@@ -174,7 +180,11 @@ public class GameScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        overWorld.render(batch);
+        if (level == 3 && nether != null) {
+            nether.render(batch);
+        } else {
+            overWorld.render(batch);
+        }
 
         if (level == 1 && spawnTrigger != null) {
             spawnTrigger.render(batch, font, player.getX(), player.getY());
@@ -237,6 +247,7 @@ public class GameScreen implements Screen {
         magePreview.dispose();
         overWorld.dispose();
         if (spawnTrigger != null) spawnTrigger.dispose();
+        if (nether != null) nether.dispose();
     }
 
     @Override public void show() {}
