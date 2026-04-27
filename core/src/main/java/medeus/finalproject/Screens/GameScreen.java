@@ -19,6 +19,7 @@ import medeus.finalproject.Entities.Heroes.Archer;
 import medeus.finalproject.Entities.Heroes.Mage;
 import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
+import medeus.finalproject.World.Dungeon;
 import medeus.finalproject.World.OverWorld;
 import medeus.finalproject.World.SpawnTrigger;
 
@@ -48,7 +49,10 @@ public class GameScreen implements Screen {
     private Texture archerPreview;
     private Texture magePreview;
 
+    // Карты — только одна будет не-null в зависимости от уровня
     private OverWorld overWorld;
+    private Dungeon   dungeon;
+
     private SpawnTrigger spawnTrigger;
 
     public GameScreen(Main game, int level) {
@@ -70,7 +74,12 @@ public class GameScreen implements Screen {
         archerPreview  = new Texture("Archer.jpeg");
         magePreview    = new Texture("Mage.jpeg");
 
-        overWorld = new OverWorld(level);
+        // Уровень 1 и 3 — OverWorld, уровень 2 — Dungeon
+        if (level == 2) {
+            dungeon = new Dungeon();
+        } else {
+            overWorld = new OverWorld(level);
+        }
 
         if (level == 1) {
             spawnTrigger = new SpawnTrigger(MAP_WIDTH, MAP_HEIGHT);
@@ -91,7 +100,7 @@ public class GameScreen implements Screen {
             font.draw(batch, "Press 1 - Warrior", 200, 270);
             font.draw(batch, "Press 2 - Archer",  350, 270);
             font.draw(batch, "Press 3 - Mage",    500, 270);
-            font.draw(batch, "Level " + level,    370, 350);
+            font.draw(batch, "Level " + level + getMapName(), 340, 350);
             batch.end();
 
             if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) { player = new Warrior(100, 100); startLevel(); }
@@ -174,14 +183,19 @@ public class GameScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        overWorld.render(batch);
+        // Рендерим нужную карту
+        if (dungeon != null) {
+            dungeon.render(batch);
+        } else {
+            overWorld.render(batch);
+        }
 
         if (level == 1 && spawnTrigger != null) {
             spawnTrigger.render(batch, font, player.getX(), player.getY());
         }
 
         player.renderHUD(batch, font, camera.position.x, camera.position.y);
-        font.draw(batch, "Level: " + level,          camera.position.x + 200, camera.position.y + 280);
+        font.draw(batch, "Level " + level + getMapName(), camera.position.x + 200, camera.position.y + 280);
         if (waveStarted) {
             font.draw(batch, "Enemies: " + enemies.size(), camera.position.x + 200, camera.position.y + 250);
         }
@@ -197,6 +211,14 @@ public class GameScreen implements Screen {
         batch.end();
     }
 
+    /** Возвращает название карты для текущего уровня */
+    private String getMapName() {
+        switch (level) {
+            case 2:  return " - Dungeon";
+            case 3:  return " - Nether";
+            default: return " - Overworld";
+        }
+    }
 
     private void startLevel() {
         heroChosen = true;
@@ -218,8 +240,8 @@ public class GameScreen implements Screen {
             } while (Math.abs(x - 100) < 300 && Math.abs(y - 100) < 300);
 
             EnemyAbstract enemy = random.nextBoolean()
-                ? new Zombie(x, y)
-                : new Skeleton(x, y);
+                    ? new Zombie(x, y)
+                    : new Skeleton(x, y);
 
             enemy.applyDifficultyScale(scale);
             enemies.add(enemy);
@@ -235,7 +257,8 @@ public class GameScreen implements Screen {
         warriorPreview.dispose();
         archerPreview.dispose();
         magePreview.dispose();
-        overWorld.dispose();
+        if (overWorld != null) overWorld.dispose();
+        if (dungeon   != null) dungeon.dispose();
         if (spawnTrigger != null) spawnTrigger.dispose();
     }
 
