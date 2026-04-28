@@ -16,7 +16,6 @@ public class Dungeon {
 
     public Dungeon() {
         floor = new Texture("696.jpg");
-        // setWrap убран
 
         wallTop    = createWallTexture();
         wallBottom = createWallTexture();
@@ -24,13 +23,10 @@ public class Dungeon {
         wallRight  = createWallTexture();
     }
 
-    /**
-     * Создаёт тёмно-серую текстуру 1x1 для стен (масштабируется при draw).
-     */
+
     private Texture createWallTexture() {
         com.badlogic.gdx.graphics.Pixmap px =
                 new com.badlogic.gdx.graphics.Pixmap(1, 1, com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
-        // Тёмно-серый цвет стен (#2a2a2a)
         px.setColor(0.16f, 0.16f, 0.16f, 1f);
         px.fill();
         Texture t = new Texture(px);
