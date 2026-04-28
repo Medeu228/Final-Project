@@ -63,7 +63,7 @@ public class SpawnTrigger {
         batch.draw(texture, x, y, SIZE, SIZE);
 
         if (isPlayerNearby(playerX, playerY)) {
-            font.draw(batch, "[E] Начать волну", x - 20, y + SIZE + 20);
+            font.draw(batch, "[E] to start wave", x - 20, y + SIZE + 20);
         }
     }
 

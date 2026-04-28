@@ -49,7 +49,6 @@ public class GameScreen implements Screen {
     private Texture archerPreview;
     private Texture magePreview;
 
-    // Карты — только одна будет не-null в зависимости от уровня
     private OverWorld overWorld;
     private Dungeon   dungeon;
 
@@ -74,7 +73,6 @@ public class GameScreen implements Screen {
         archerPreview  = new Texture("Archer.jpeg");
         magePreview    = new Texture("Mage.jpeg");
 
-        // Уровень 1 и 3 — OverWorld, уровень 2 — Dungeon
         if (level == 2) {
             dungeon = new Dungeon();
         } else {
@@ -115,7 +113,7 @@ public class GameScreen implements Screen {
             batch.setProjectionMatrix(camera.combined);
             batch.begin();
             font.draw(batch, "GAME OVER", 350, 320);
-            font.draw(batch, "ESC - вернуться в меню", 300, 290);
+            font.draw(batch, "ESC - to back to menu", 300, 290);
             batch.end();
             if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
                 game.setScreen(new Loading(game, new Menu(game), 2f));
@@ -131,11 +129,11 @@ public class GameScreen implements Screen {
             batch.begin();
             font.draw(batch, "LEVEL " + level + " COMPLETE!", 310, 330);
             if (level < 3) {
-                font.draw(batch, "ENTER - следующий уровень", 290, 300);
+                font.draw(batch, "ENTER - to next level", 290, 300);
             } else {
-                font.draw(batch, "Вы прошли игру!", 320, 300);
+                font.draw(batch, "You finished the game!", 320, 300);
             }
-            font.draw(batch, "ESC - в меню", 350, 270);
+            font.draw(batch, "ESC - to menu", 350, 270);
             batch.end();
 
             if (level < 3 && Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
@@ -183,7 +181,6 @@ public class GameScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        // Рендерим нужную карту
         if (dungeon != null) {
             dungeon.render(batch);
         } else {
@@ -211,7 +208,6 @@ public class GameScreen implements Screen {
         batch.end();
     }
 
-    /** Возвращает название карты для текущего уровня */
     private String getMapName() {
         switch (level) {
             case 2:  return " - Dungeon";

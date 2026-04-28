@@ -16,6 +16,7 @@ public class Dungeon {
 
     public Dungeon() {
         floor = new Texture("696.jpg");
+        floor.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat); // добавить это
 
         wallTop    = createWallTexture();
         wallBottom = createWallTexture();
@@ -35,12 +36,7 @@ public class Dungeon {
     }
 
     public void render(SpriteBatch batch) {
-        batch.draw(floor, 0, 0, MAP_SIZE, MAP_SIZE); // просто растягиваем
-
-        batch.draw(wallTop,    0,                    MAP_SIZE - WALL_THICK, MAP_SIZE,   WALL_THICK);
-        batch.draw(wallBottom, 0,                    0,                     MAP_SIZE,   WALL_THICK);
-        batch.draw(wallLeft,   0,                    WALL_THICK,            WALL_THICK, MAP_SIZE - WALL_THICK * 2);
-        batch.draw(wallRight,  MAP_SIZE - WALL_THICK, WALL_THICK,           WALL_THICK, MAP_SIZE - WALL_THICK * 2);
+        batch.draw(floor, 0, 0, 1600, 1600, 0, 0, 4, 4);
     }
 
     public void dispose() {

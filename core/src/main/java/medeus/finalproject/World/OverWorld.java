@@ -13,14 +13,14 @@ public class OverWorld {
         switch (level) {
             case 2:  textureName = "background2.png"; break;
             case 3:  textureName = "background3.png"; break;
-            default: textureName = "background.png";  break;
+            default: textureName = "BG1.jpg";  break;
         }
         background = new Texture(textureName);
         background.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
     }
 
     public void render(SpriteBatch batch) {
-        batch.draw(background, 0, 0, 1600, 1600, 0, 0, 50, 50);
+        batch.draw(background, 0, 0, 1600, 1600, 0, 0, 16, 16);
     }
 
     public void dispose() {
