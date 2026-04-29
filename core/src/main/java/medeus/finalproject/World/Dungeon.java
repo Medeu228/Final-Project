@@ -16,7 +16,7 @@ public class Dungeon {
 
     public Dungeon() {
         floor = new Texture("696.jpg");
-        floor.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat); // добавить это
+        floor.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
 
         wallTop    = createWallTexture();
         wallBottom = createWallTexture();

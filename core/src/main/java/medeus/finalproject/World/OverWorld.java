@@ -11,8 +11,6 @@ public class OverWorld {
     public OverWorld(int level) {
         String textureName;
         switch (level) {
-            case 2:  textureName = "background2.png"; break;
-            case 3:  textureName = "background3.png"; break;
             default: textureName = "BG1.jpg";  break;
         }
         background = new Texture(textureName);

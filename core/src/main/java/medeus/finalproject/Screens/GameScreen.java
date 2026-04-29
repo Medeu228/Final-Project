@@ -20,6 +20,7 @@ import medeus.finalproject.Entities.Heroes.Mage;
 import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
 import medeus.finalproject.World.Dungeon;
+import medeus.finalproject.World.Nether;
 import medeus.finalproject.World.OverWorld;
 import medeus.finalproject.World.SpawnTrigger;
 
@@ -51,6 +52,7 @@ public class GameScreen implements Screen {
 
     private OverWorld overWorld;
     private Dungeon   dungeon;
+    private Nether nether;
 
     private SpawnTrigger spawnTrigger;
 
@@ -75,7 +77,11 @@ public class GameScreen implements Screen {
 
         if (level == 2) {
             dungeon = new Dungeon();
-        } else {
+        }
+        if (level == 3) {
+            nether = new Nether();
+        }
+        else {
             overWorld = new OverWorld(level);
         }
 
