@@ -77,11 +77,9 @@ public class GameScreen implements Screen {
 
         if (level == 2) {
             dungeon = new Dungeon();
-        }
-        if (level == 3) {
+        } else if (level == 3) {
             nether = new Nether();
-        }
-        else {
+        } else {
             overWorld = new OverWorld(level);
         }
 
@@ -189,6 +187,8 @@ public class GameScreen implements Screen {
 
         if (dungeon != null) {
             dungeon.render(batch);
+        } else if (nether != null) {
+            nether.render(batch);
         } else {
             overWorld.render(batch);
         }
@@ -261,6 +261,7 @@ public class GameScreen implements Screen {
         magePreview.dispose();
         if (overWorld != null) overWorld.dispose();
         if (dungeon   != null) dungeon.dispose();
+        if (nether != null) nether.dispose();
         if (spawnTrigger != null) spawnTrigger.dispose();
     }
 
