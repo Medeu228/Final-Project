@@ -7,7 +7,6 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -15,12 +14,8 @@ import medeus.finalproject.Main;
 import medeus.finalproject.Entities.Enemies.Skeleton;
 import medeus.finalproject.Entities.Enemies.Zombie;
 import medeus.finalproject.Entities.EnemyAbstract;
-import medeus.finalproject.Entities.Heroes.Archer;
-import medeus.finalproject.Entities.Heroes.Mage;
 import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
-import medeus.finalproject.World.Dungeon;
-import medeus.finalproject.World.Nether;
 import medeus.finalproject.World.OverWorld;
 import medeus.finalproject.World.SpawnTrigger;
 
@@ -38,22 +33,14 @@ public class GameScreen implements Screen {
     private SpriteBatch batch;
     private OrthographicCamera camera;
     private Player player;
-    private boolean heroChosen   = false;
-    private boolean waveStarted  = false;
+    private boolean waveStarted = false;
     private ArrayList<EnemyAbstract> enemies;
     private Random random;
     private boolean gameOver = false;
     private BitmapFont font;
     private ShapeRenderer shapeRenderer;
 
-    private Texture warriorPreview;
-    private Texture archerPreview;
-    private Texture magePreview;
-
     private OverWorld overWorld;
-    private Dungeon   dungeon;
-    private Nether nether;
-
     private SpawnTrigger spawnTrigger;
 
     public GameScreen(Main game, int level) {
@@ -71,20 +58,17 @@ public class GameScreen implements Screen {
         enemies = new ArrayList<>();
         random  = new Random();
 
-        warriorPreview = new Texture("Warrior.jpeg");
-        archerPreview  = new Texture("Archer.jpeg");
-        magePreview    = new Texture("Mage.jpeg");
+        overWorld = new OverWorld(level);
 
-        if (level == 2) {
-            dungeon = new Dungeon();
-        } else if (level == 3) {
-            nether = new Nether();
-        } else {
-            overWorld = new OverWorld(level);
-        }
+        // Создаём Warrior нужного уровня сразу
+        player = new Warrior(100, 100, level);
 
         if (level == 1) {
             spawnTrigger = new SpawnTrigger(MAP_WIDTH, MAP_HEIGHT);
+        } else {
+            // Уровни 2 и 3 — враги спавнятся сразу
+            spawnEnemies();
+            waveStarted = true;
         }
     }
 
@@ -93,31 +77,13 @@ public class GameScreen implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        if (!heroChosen) {
-            batch.setProjectionMatrix(camera.combined);
-            batch.begin();
-            batch.draw(warriorPreview, 200, 300, 128, 128);
-            batch.draw(archerPreview,  350, 300, 128, 128);
-            batch.draw(magePreview,    500, 300, 128, 128);
-            font.draw(batch, "Press 1 - Warrior", 200, 270);
-            font.draw(batch, "Press 2 - Archer",  350, 270);
-            font.draw(batch, "Press 3 - Mage",    500, 270);
-            font.draw(batch, "Level " + level + getMapName(), 340, 350);
-            batch.end();
-
-            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) { player = new Warrior(100, 100); startLevel(); }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) { player = new Archer(100, 100);  startLevel(); }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) { player = new Mage(100, 100);    startLevel(); }
-            return;
-        }
-
         if (gameOver) {
             Gdx.gl.glClearColor(0.3f, 0, 0, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
             batch.setProjectionMatrix(camera.combined);
             batch.begin();
             font.draw(batch, "GAME OVER", 350, 320);
-            font.draw(batch, "ESC - to back to menu", 300, 290);
+            font.draw(batch, "ESC - вернуться в меню", 300, 290);
             batch.end();
             if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
                 game.setScreen(new Loading(game, new Menu(game), 2f));
@@ -133,11 +99,11 @@ public class GameScreen implements Screen {
             batch.begin();
             font.draw(batch, "LEVEL " + level + " COMPLETE!", 310, 330);
             if (level < 3) {
-                font.draw(batch, "ENTER - to next level", 290, 300);
+                font.draw(batch, "ENTER - следующий уровень", 290, 300);
             } else {
-                font.draw(batch, "You finished the game!", 320, 300);
+                font.draw(batch, "Вы прошли игру!", 320, 300);
             }
-            font.draw(batch, "ESC - to menu", 350, 270);
+            font.draw(batch, "ESC - в меню", 350, 270);
             batch.end();
 
             if (level < 3 && Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
@@ -153,6 +119,7 @@ public class GameScreen implements Screen {
 
         player.update(delta);
 
+        // Уровень 1: активация волны через SpawnTrigger
         if (level == 1 && spawnTrigger != null && !waveStarted) {
             if (spawnTrigger.checkActivation(player.getX(), player.getY())) {
                 spawnEnemies();
@@ -177,7 +144,7 @@ public class GameScreen implements Screen {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         player.renderAttackRange(shapeRenderer);
         shapeRenderer.end();
         Gdx.gl.glDisable(GL20.GL_BLEND);
@@ -185,20 +152,14 @@ public class GameScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        if (dungeon != null) {
-            dungeon.render(batch);
-        } else if (nether != null) {
-            nether.render(batch);
-        } else {
-            overWorld.render(batch);
-        }
+        overWorld.render(batch);
 
         if (level == 1 && spawnTrigger != null) {
             spawnTrigger.render(batch, font, player.getX(), player.getY());
         }
 
         player.renderHUD(batch, font, camera.position.x, camera.position.y);
-        font.draw(batch, "Level " + level + getMapName(), camera.position.x + 200, camera.position.y + 280);
+        font.draw(batch, "Level: " + level, camera.position.x + 200, camera.position.y + 280);
         if (waveStarted) {
             font.draw(batch, "Enemies: " + enemies.size(), camera.position.x + 200, camera.position.y + 250);
         }
@@ -214,22 +175,6 @@ public class GameScreen implements Screen {
         batch.end();
     }
 
-    private String getMapName() {
-        switch (level) {
-            case 2:  return " - Dungeon";
-            case 3:  return " - Nether";
-            default: return " - Overworld";
-        }
-    }
-
-    private void startLevel() {
-        heroChosen = true;
-        if (level > 1) {
-            spawnEnemies();
-            waveStarted = true;
-        }
-    }
-
     private void spawnEnemies() {
         int count   = ENEMY_COUNT[level];
         float scale = DIFF_SCALE[level];
@@ -242,8 +187,8 @@ public class GameScreen implements Screen {
             } while (Math.abs(x - 100) < 300 && Math.abs(y - 100) < 300);
 
             EnemyAbstract enemy = random.nextBoolean()
-                    ? new Zombie(x, y)
-                    : new Skeleton(x, y);
+                ? new Zombie(x, y)
+                : new Skeleton(x, y);
 
             enemy.applyDifficultyScale(scale);
             enemies.add(enemy);
@@ -256,12 +201,7 @@ public class GameScreen implements Screen {
         batch.dispose();
         font.dispose();
         shapeRenderer.dispose();
-        warriorPreview.dispose();
-        archerPreview.dispose();
-        magePreview.dispose();
-        if (overWorld != null) overWorld.dispose();
-        if (dungeon   != null) dungeon.dispose();
-        if (nether != null) nether.dispose();
+        overWorld.dispose();
         if (spawnTrigger != null) spawnTrigger.dispose();
     }
 

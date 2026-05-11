@@ -7,7 +7,6 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -15,8 +14,6 @@ import medeus.finalproject.Main;
 import medeus.finalproject.Entities.Enemies.Skeleton;
 import medeus.finalproject.Entities.Enemies.Zombie;
 import medeus.finalproject.Entities.EnemyAbstract;
-import medeus.finalproject.Entities.Heroes.Archer;
-import medeus.finalproject.Entities.Heroes.Mage;
 import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
 import medeus.finalproject.World.TestingRange;
@@ -27,16 +24,14 @@ public class devScreen implements Screen {
     private SpriteBatch batch;
     private OrthographicCamera camera;
     private Player player;
-    private boolean heroChosen = false;
     private ArrayList<EnemyAbstract> enemies;
     private Random random;
     private boolean gameOver = false;
     private BitmapFont font;
     private ShapeRenderer shapeRenderer;
 
-    private Texture warriorPreview;
-    private Texture archerPreview;
-    private Texture magePreview;
+    // Текущий уровень Warrior в dev-режиме (переключается клавишами 1/2/3)
+    private int warriorLevel = 1;
 
     private TestingRange testingrange;
 
@@ -52,14 +47,11 @@ public class devScreen implements Screen {
 
         enemies = new ArrayList<>();
         random = new Random();
-
-        warriorPreview = new Texture("Warrior.jpeg");
-        archerPreview  = new Texture("Archer.jpeg");
-        magePreview    = new Texture("Mage.jpeg");
-
         shapeRenderer = new ShapeRenderer();
-
         testingrange = new TestingRange();
+
+        // Создаём Warrior Lv.1 сразу
+        player = new Warrior(100, 100, warriorLevel);
     }
 
     @Override
@@ -67,41 +59,25 @@ public class devScreen implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-
-        if (!heroChosen) {
-            batch.setProjectionMatrix(camera.combined);
-            batch.begin();
-            batch.draw(warriorPreview, 200, 300, 128, 128);
-            batch.draw(archerPreview,  350, 300, 128, 128);
-            batch.draw(magePreview,    500, 300, 128, 128);
-            font.draw(batch, "Press 1 - Warrior", 200, 270);
-            font.draw(batch, "Press 2 - Archer",  350, 270);
-            font.draw(batch, "Press 3 - Mage",    500, 270);
-            batch.end();
-
-            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) { player = new Warrior(100, 100); heroChosen = true; }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) { player = new Archer(100, 100);  heroChosen = true; }
-            if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) { player = new Mage(100, 100);    heroChosen = true; }
-            return;
-        }
-
-
         if (gameOver) {
             Gdx.gl.glClearColor(0.3f, 0, 0, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
             batch.setProjectionMatrix(camera.combined);
             batch.begin();
             font.draw(batch, "GAME OVER", 350, 320);
             font.draw(batch, "ESC - вернуться в меню", 300, 290);
             batch.end();
-
             if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
                 game.setScreen(new Loading(game, new Menu(game), 2f));
                 dispose();
             }
             return;
         }
+
+        // Переключение уровня Warrior (1/2/3) — пересоздаём с той же позицией
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_1)) switchWarriorLevel(1);
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_2)) switchWarriorLevel(2);
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUM_3)) switchWarriorLevel(3);
 
         player.update(delta);
 
@@ -122,28 +98,26 @@ public class devScreen implements Screen {
 
         camera.position.set(player.getX(), player.getY(), 0);
         camera.update();
-        batch.setProjectionMatrix(camera.combined);
-        
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
-
         shapeRenderer.setProjectionMatrix(camera.combined);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         player.renderAttackRange(shapeRenderer);
         shapeRenderer.end();
-
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
+        batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
         testingrange.render(batch);
 
         player.renderHUD(batch, font, camera.position.x, camera.position.y);
-        font.draw(batch, "DEV SCREEN",          camera.position.x - 60,  camera.position.y + 280);
-        font.draw(batch, "E - spawn enemy",      camera.position.x + 200, camera.position.y + 280);
-        font.draw(batch, "F - attack",           camera.position.x + 200, camera.position.y + 250);
-        font.draw(batch, "ESC - menu when dead", camera.position.x + 200, camera.position.y + 220);
+        font.draw(batch, "DEV SCREEN",            camera.position.x - 60,  camera.position.y + 280);
+        font.draw(batch, "1/2/3 - warrior level", camera.position.x + 200, camera.position.y + 280);
+        font.draw(batch, "E - spawn enemy",        camera.position.x + 200, camera.position.y + 250);
+        font.draw(batch, "F - attack",             camera.position.x + 200, camera.position.y + 220);
+        font.draw(batch, "ESC - menu when dead",   camera.position.x + 200, camera.position.y + 190);
 
         player.render(batch);
 
@@ -154,6 +128,15 @@ public class devScreen implements Screen {
         }
 
         batch.end();
+    }
+
+    private void switchWarriorLevel(int newLevel) {
+        if (newLevel == warriorLevel) return;
+        float px = player.getX();
+        float py = player.getY();
+        player.dispose();
+        warriorLevel = newLevel;
+        player = new Warrior(px, py, warriorLevel);
     }
 
     private void spawnEnemy() {
@@ -167,9 +150,6 @@ public class devScreen implements Screen {
         if (player != null) player.dispose();
         batch.dispose();
         font.dispose();
-        warriorPreview.dispose();
-        archerPreview.dispose();
-        magePreview.dispose();
         testingrange.dispose();
         shapeRenderer.dispose();
     }

@@ -19,38 +19,55 @@ public class Skeleton extends EnemyAbstract {
 
     @Override
     protected void loadAnimation() {
-        spriteSheet = new Texture("спрайт скелет.png");
+        // Walk — Down/Up/Left/Right (строки 0/1/2/3)
+        spriteSheet = new Texture("Спрайты/Скелет спрайты/Skeleton_walk.png");
         splitFrames = TextureRegion.split(spriteSheet, 64, 64);
 
-        idleDown = splitFrames[0][0];
-        idleLeft = splitFrames[1][0];
-        idleRight = splitFrames[2][0];
-        idleUp = splitFrames[3][0];
+        idleDown  = splitFrames[0][0];
+        idleUp    = splitFrames[1][0];
+        idleLeft  = splitFrames[2][0];
+        idleRight = splitFrames[3][0];
 
-        TextureRegion[] downFrames = new TextureRegion[3];
-        TextureRegion[] leftFrames = new TextureRegion[3];
-        TextureRegion[] rightFrames = new TextureRegion[3];
-        TextureRegion[] upFrames = new TextureRegion[3];
+        int frameCount = splitFrames[0].length;
+        TextureRegion[] d = new TextureRegion[frameCount];
+        TextureRegion[] u = new TextureRegion[frameCount];
+        TextureRegion[] l = new TextureRegion[frameCount];
+        TextureRegion[] r = new TextureRegion[frameCount];
 
-        downFrames[0] = splitFrames[0][1];
-        downFrames[1] = splitFrames[0][2];
-        downFrames[2] = splitFrames[0][3];
+        for (int i = 0; i < frameCount; i++) {
+            d[i] = splitFrames[0][i];
+            u[i] = splitFrames[1][i];
+            l[i] = splitFrames[2][i];
+            r[i] = splitFrames[3][i];
+        }
 
-        leftFrames[0] = splitFrames[1][1];
-        leftFrames[1] = splitFrames[1][2];
-        leftFrames[2] = splitFrames[1][3];
+        walkDown  = new Animation<>(0.12f, d);
+        walkUp    = new Animation<>(0.12f, u);
+        walkLeft  = new Animation<>(0.12f, l);
+        walkRight = new Animation<>(0.12f, r);
 
-        rightFrames[0] = splitFrames[2][1];
-        rightFrames[1] = splitFrames[2][2];
-        rightFrames[2] = splitFrames[2][3];
+        // Attack — 9 фреймов, тот же порядок строк
+        attackSpriteSheet = new Texture("Спрайты/Скелет спрайты/Skeleton_attack.png");
+        TextureRegion[][] atkFrames = TextureRegion.split(attackSpriteSheet, 64, 64);
 
-        upFrames[0] = splitFrames[3][1];
-        upFrames[1] = splitFrames[3][2];
-        upFrames[2] = splitFrames[3][3];
+        int atkCount = atkFrames[0].length; // 9
+        TextureRegion[] ad = new TextureRegion[atkCount];
+        TextureRegion[] au = new TextureRegion[atkCount];
+        TextureRegion[] al = new TextureRegion[atkCount];
+        TextureRegion[] ar = new TextureRegion[atkCount];
 
-        walkDown = new Animation<>(0.15f, downFrames);
-        walkLeft = new Animation<>(0.15f, leftFrames);
-        walkRight = new Animation<>(0.15f, rightFrames);
-        walkUp = new Animation<>(0.15f, upFrames);
+        for (int i = 0; i < atkCount; i++) {
+            ad[i] = atkFrames[0][i];
+            au[i] = atkFrames[1][i];
+            al[i] = atkFrames[2][i];
+            ar[i] = atkFrames[3][i];
+        }
+
+        attackAnimDown  = new Animation<>(0.10f, ad);
+        attackAnimUp    = new Animation<>(0.10f, au);
+        attackAnimLeft  = new Animation<>(0.10f, al);
+        attackAnimRight = new Animation<>(0.10f, ar);
+
+        attackAnimDuration = atkCount * 0.10f; // 0.9с
     }
 }
