@@ -93,4 +93,9 @@ public abstract class Player {
     public float getAttackCooldown() { return attackCooldown; }
     public Rectangle getHitbox() { return hitbox; }
     public Rectangle getBounds() { return hitbox; }
+
+    public void heal(int amount) {
+        int maxHp = 200;
+        hp = Math.min(hp + amount, maxHp);
+    }
 }
