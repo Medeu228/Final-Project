@@ -138,7 +138,16 @@ public class GameScreen implements Screen {
             return;
         }
 
-        camera.position.set(player.getX(), player.getY(), 0);
+        float halfW = camera.viewportWidth / 2f;   // = 400
+        float halfH = camera.viewportHeight / 2f;  // = 300
+
+        float targetX = player.getX() + 64f;  // центр спрайта 128px
+        float targetY = player.getY() + 64f;  // центр спрайта 128px
+
+        float camX = Math.max(halfW, Math.min(targetX, MAP_WIDTH  - halfW));
+        float camY = Math.max(halfH, Math.min(targetY, MAP_HEIGHT - halfH));
+
+        camera.position.set(camX, camY, 0);
         camera.update();
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
