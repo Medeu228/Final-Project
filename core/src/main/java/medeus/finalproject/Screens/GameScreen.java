@@ -7,6 +7,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -18,6 +19,8 @@ import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
 import medeus.finalproject.World.OverWorld;
 import medeus.finalproject.World.SpawnTrigger;
+import medeus.finalproject.Entities.Items.HealingItem;
+import java.util.Iterator;
 
 public class GameScreen implements Screen {
 
@@ -43,6 +46,9 @@ public class GameScreen implements Screen {
     private OverWorld overWorld;
     private SpawnTrigger spawnTrigger;
 
+    private Texture heartTexture;
+    private ArrayList<HealingItem> healingItems;
+
     public GameScreen(Main game, int level) {
         this.game  = game;
         this.level = level;
@@ -59,6 +65,9 @@ public class GameScreen implements Screen {
         random  = new Random();
 
         overWorld = new OverWorld(level);
+        heartTexture = new Texture("heart.png");
+        healingItems = new ArrayList<>();
+        spawnHearts(5);
 
         // Создаём Warrior нужного уровня сразу
         player = new Warrior(100, 100, level);
@@ -138,7 +147,16 @@ public class GameScreen implements Screen {
             return;
         }
 
-        camera.position.set(player.getX(), player.getY(), 0);
+        float halfW = camera.viewportWidth / 2f;   // = 400
+        float halfH = camera.viewportHeight / 2f;  // = 300
+
+        float targetX = player.getX() + 64f;  // центр спрайта 128px
+        float targetY = player.getY() + 64f;  // центр спрайта 128px
+
+        float camX = Math.max(halfW, Math.min(targetX, MAP_WIDTH  - halfW));
+        float camY = Math.max(halfH, Math.min(targetY, MAP_HEIGHT - halfH));
+
+        camera.position.set(camX, camY, 0);
         camera.update();
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
@@ -165,6 +183,15 @@ public class GameScreen implements Screen {
         }
 
         player.render(batch);
+        Iterator<HealingItem> it = healingItems.iterator();
+        while (it.hasNext()) {
+            HealingItem heart = it.next();
+            heart.render(batch);
+            if (heart.checkPickup(player.getHitbox())) {
+                player.heal(heart.getHealAmount());
+                it.remove();
+            }
+        }
 
         for (EnemyAbstract enemy : enemies) {
             enemy.update(delta, player.getX(), player.getY());
@@ -203,6 +230,7 @@ public class GameScreen implements Screen {
         shapeRenderer.dispose();
         overWorld.dispose();
         if (spawnTrigger != null) spawnTrigger.dispose();
+        heartTexture.dispose();
     }
 
     @Override public void show() {}
@@ -210,4 +238,12 @@ public class GameScreen implements Screen {
     @Override public void pause() {}
     @Override public void resume() {}
     @Override public void hide() {}
+
+    private void spawnHearts(int count) {
+        for (int i = 0; i < count; i++) {
+            float x = 100 + random.nextFloat() * 1400;
+            float y = 100 + random.nextFloat() * 1400;
+            healingItems.add(new HealingItem(x, y, heartTexture));
+        }
+    }
 }
