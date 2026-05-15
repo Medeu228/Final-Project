@@ -48,6 +48,9 @@ public class GameScreen implements Screen {
 
     private Texture heartTexture;
     private ArrayList<HealingItem> healingItems;
+    private float heartSpawnTimer = 0f;
+    private static final float HEART_SPAWN_INTERVAL = 15f;
+    private static final int MAX_HEARTS = 3;
 
     public GameScreen(Main game, int level) {
         this.game  = game;
@@ -67,7 +70,6 @@ public class GameScreen implements Screen {
         overWorld = new OverWorld(level);
         heartTexture = new Texture("heart.png");
         healingItems = new ArrayList<>();
-        spawnHearts(5);
 
         // Создаём Warrior нужного уровня сразу
         player = new Warrior(100, 100, level);
@@ -127,6 +129,12 @@ public class GameScreen implements Screen {
         }
 
         player.update(delta);
+        // Спавн сердечек каждые 15 секунд
+        heartSpawnTimer += delta;
+        if (heartSpawnTimer >= HEART_SPAWN_INTERVAL && healingItems.size() < MAX_HEARTS) {
+            spawnHearts(1);
+            heartSpawnTimer = 0f;
+        }
 
         // Уровень 1: активация волны через SpawnTrigger
         if (level == 1 && spawnTrigger != null && !waveStarted) {
