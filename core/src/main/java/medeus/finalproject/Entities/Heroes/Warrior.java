@@ -2,6 +2,8 @@ package medeus.finalproject.Entities.Heroes;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -11,17 +13,16 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import medeus.finalproject.Entities.EnemyAbstract;
 import medeus.finalproject.Entities.Player;
 import java.util.List;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class Warrior extends Player {
 
     private int level;
+    private int maxHp;              // максимальное HP — фиксируется при loadStats
     private float attackRadius;
-    private float sectorAngle;   // ширина сектора в градусах
+    private float sectorAngle;
 
-    // ─── Текстуры (нужно хранить для dispose) ─────────────────────────────────
+    private Texture pixel;          // 1×1 белый пиксель для рисования баров
+
     private Texture idleSheet;
     private Texture walkSheet;
     private Texture runSheet;
@@ -29,37 +30,39 @@ public class Warrior extends Player {
     private Texture walkAttackSheet;
     private Texture runAttackSheet;
 
-    // ─── Анимации ─────────────────────────────────────────────────────────────
     private Animation<TextureRegion> idleDown,  idleLeft,  idleRight,  idleUp;
     private Animation<TextureRegion> runDown,   runLeft,   runRight,   runUp;
     private Animation<TextureRegion> atkDown,   atkLeft,   atkRight,   atkUp;
     private Animation<TextureRegion> wAtkDown,  wAtkLeft,  wAtkRight,  wAtkUp;
     private Animation<TextureRegion> rAtkDown,  rAtkLeft,  rAtkRight,  rAtkUp;
 
-    // ─── Состояние ────────────────────────────────────────────────────────────
-    private boolean isRunning    = false;
-    private boolean isAttacking  = false;  // true пока идёт анимация атаки
-    private boolean wasMoving    = false;  // двигался ли в момент атаки
-    private boolean wasRunning   = false;  // бежал ли в момент атаки
+    private boolean isRunning   = false;
+    private boolean isAttacking = false;
+    private boolean wasMoving   = false;
+    private boolean wasRunning  = false;
 
     private float attackAnimTimer = 0f;
-    private boolean hitPending   = false;
-    private float   hitDelayTimer = 0f;
-    private List<EnemyAbstract> pendingEnemies;
 
-    // Длительности анимаций = кол-во фреймов × время фрейма
-    private static final float DUR_ATK       = 8 * 0.10f;  // 0.80с
-    private static final float DUR_WALK_ATK  = 6 * 0.10f;  // 0.60с
-    private static final float DUR_RUN_ATK   = 8 * 0.08f;  // 0.64с
+    private static final float DUR_ATK      = 8 * 0.10f;  // 0.80с
+    private static final float DUR_WALK_ATK = 6 * 0.10f;  // 0.60с
+    private static final float DUR_RUN_ATK  = 8 * 0.08f;  // 0.64с
 
     // ─── Конструктор ──────────────────────────────────────────────────────────
 
     public Warrior(float x, float y, int level) {
-        super(x, y);        // вызывает loadStats() и loadAnimation() с level=0
+        super(x, y);
         this.level = level;
-        disposeSheets();    // чистим текстуры первого вызова
+        disposeSheets();
         loadStats();
+        maxHp = hp;   // фиксируем максимум после реального loadStats()
         loadAnimation();
+
+        // 1×1 белый пиксель — используется для рисования цветных прямоугольников
+        Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pm.setColor(Color.WHITE);
+        pm.fill();
+        pixel = new Texture(pm);
+        pm.dispose();
     }
 
     // ─── Характеристики ───────────────────────────────────────────────────────
@@ -67,9 +70,18 @@ public class Warrior extends Player {
     @Override
     protected void loadStats() {
         switch (level) {
-            case 2: hp = 250; attack = 45; attackCooldown = 0.8f; attackRadius = 200f; sectorAngle = 120f; break;
-            case 3: hp = 300; attack = 60; attackCooldown = 0.7f; attackRadius = 225f; sectorAngle = 150f; break;
-            default: hp = 200; attack = 35; attackCooldown = 0.9f; attackRadius = 175f; sectorAngle =  90f; break;
+            case 2:
+                hp = 300; attack = 55; attackCooldown = 0.75f;
+                attackRadius = 210f; sectorAngle = 120f;
+                break;
+            case 3:
+                hp = 400; attack = 75; attackCooldown = 0.65f;
+                attackRadius = 235f; sectorAngle = 150f;
+                break;
+            default: // level 1 (и level=0 при первом вызове из super)
+                hp = 220; attack = 40; attackCooldown = 0.90f;
+                attackRadius = 175f; sectorAngle =  90f;
+                break;
         }
     }
 
@@ -80,29 +92,24 @@ public class Warrior extends Player {
         int lvl = (level == 0) ? 1 : level;
         String p = "Спрайты/Перс " + lvl + " лвл/Player_lvl" + lvl;
 
-        // Idle: вниз/влево/вправо — 12 фреймов, вверх — 4 фрейма
-        idleSheet      = loadAnimsWithCounts(p + "_idle.png", 0.12f, idleAnims = new Animation[4], new int[]{12, 12, 12, 4});
-        spriteSheet    = loadAnims(p + "_walk.png",        0.12f, walkAnims  = new Animation[4]);  // spriteSheet для совместимости с Player.dispose()
-        runSheet       = loadAnims(p + "_run.png",         0.08f, runAnims   = new Animation[4]);
-        attackSheet    = loadAnims(p + "_attack.png",      0.10f, atkAnims   = new Animation[4]);
-        walkAttackSheet= loadAnims(p + "_walk_attack.png", 0.10f, wAtkAnims  = new Animation[4]);
-        runAttackSheet = loadAnims(p + "_run_attack.png",  0.08f, rAtkAnims  = new Animation[4]);
+        idleSheet       = loadAnimsWithCounts(p + "_idle.png",        0.12f, idleAnims  = new Animation[4], new int[]{12, 12, 12, 4});
+        spriteSheet     = loadAnims(p + "_walk.png",                  0.12f, walkAnims  = new Animation[4]);
+        runSheet        = loadAnims(p + "_run.png",                   0.08f, runAnims   = new Animation[4]);
+        attackSheet     = loadAnims(p + "_attack.png",                0.10f, atkAnims   = new Animation[4]);
+        walkAttackSheet = loadAnims(p + "_walk_attack.png",           0.10f, wAtkAnims  = new Animation[4]);
+        runAttackSheet  = loadAnims(p + "_run_attack.png",            0.08f, rAtkAnims  = new Animation[4]);
 
-        // Раскладываем по именованным полям (для читаемости в render)
-        idleDown  = idleAnims[0]; idleLeft  = idleAnims[1]; idleRight  = idleAnims[2]; idleUp  = idleAnims[3];
-        runDown   = runAnims[0];  runLeft   = runAnims[1];  runRight   = runAnims[2];  runUp   = runAnims[3];
-        atkDown   = atkAnims[0];  atkLeft   = atkAnims[1];  atkRight   = atkAnims[2];  atkUp   = atkAnims[3];
-        wAtkDown  = wAtkAnims[0]; wAtkLeft  = wAtkAnims[1]; wAtkRight  = wAtkAnims[2]; wAtkUp  = wAtkAnims[3];
-        rAtkDown  = rAtkAnims[0]; rAtkLeft  = rAtkAnims[1]; rAtkRight  = rAtkAnims[2]; rAtkUp  = rAtkAnims[3];
+        idleDown  = idleAnims[0];  idleLeft  = idleAnims[1];  idleRight  = idleAnims[2];  idleUp  = idleAnims[3];
+        runDown   = runAnims[0];   runLeft   = runAnims[1];   runRight   = runAnims[2];   runUp   = runAnims[3];
+        atkDown   = atkAnims[0];   atkLeft   = atkAnims[1];   atkRight   = atkAnims[2];   atkUp   = atkAnims[3];
+        wAtkDown  = wAtkAnims[0];  wAtkLeft  = wAtkAnims[1];  wAtkRight  = wAtkAnims[2];  wAtkUp  = wAtkAnims[3];
+        rAtkDown  = rAtkAnims[0];  rAtkLeft  = rAtkAnims[1];  rAtkRight  = rAtkAnims[2];  rAtkUp  = rAtkAnims[3];
 
-        // Walk-анимации в родительские поля (используются в super.render как fallback)
         walkDown  = walkAnims[0]; walkLeft  = walkAnims[1]; walkRight  = walkAnims[2]; walkUp  = walkAnims[3];
     }
 
-    // Временные массивы для передачи из вспомогательного метода
     private Animation[] idleAnims, walkAnims, runAnims, atkAnims, wAtkAnims, rAtkAnims;
 
-    /** Грузит один спрайт-лист и возвращает массив из 4 Animation (Down/Left/Right/Up). */
     private Texture loadAnims(String path, float frameDur, Animation[] out) {
         Texture tex = new Texture(path);
         TextureRegion[][] frames = TextureRegion.split(tex, 64, 64);
@@ -131,56 +138,53 @@ public class Warrior extends Player {
 
     @Override
     public void update(float delta) {
-        super.update(delta);  // движение, кулдаун атаки, hitbox
+        super.update(delta);
         isRunning = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
-
-        // Таймер длительности анимации атаки (это было раньше, его потеряли!)
         if (attackAnimTimer > 0) {
             attackAnimTimer -= delta;
             if (attackAnimTimer <= 0) isAttacking = false;
         }
-
-        // Таймер задержки урона
-        if (hitPending && hitDelayTimer > 0) {
-            hitDelayTimer -= delta;
-            if (hitDelayTimer <= 0) {
-                hitPending = false;
-                applyAttackDamage(pendingEnemies);
-            }
-        }
     }
 
-    // ─── Атака ────────────────────────────────────────────────────────────────
+    // ─── Атака (сектор) ───────────────────────────────────────────────────────
 
     @Override
     public void performAttack(List<EnemyAbstract> enemies) {
         if (!canAttack()) return;
-        attackTimer = attackCooldown;
-
-        wasMoving  = moving;
-        wasRunning = isRunning;
-        isAttacking = true;
+        attackTimer     = attackCooldown;
+        wasMoving       = moving;
+        wasRunning      = isRunning;
+        isAttacking     = true;
         attackAnimTimer = wasRunning ? DUR_RUN_ATK : (wasMoving ? DUR_WALK_ATK : DUR_ATK);
 
-        // Задержка урона до середины анимации (фрейм 4 из 8)
-        hitDelayTimer = wasRunning ? (4 * 0.08f) : (wasMoving ? (3 * 0.10f) : (4 * 0.10f));
-        hitPending    = true;
-        pendingEnemies = enemies;
+        float cx = x + 64, cy = y + 64;
+        float facingAngle = directionToAngle(direction);
+        float half = sectorAngle / 2f;
+
+        for (EnemyAbstract e : enemies) {
+            float ex = e.getHitbox().x + 64, ey = e.getHitbox().y + 64;
+            float dx = ex - cx, dy = ey - cy;
+            float dist = (float) Math.sqrt(dx * dx + dy * dy);
+            if (dist > attackRadius) continue;
+
+            float angleToEnemy = (float) Math.toDegrees(Math.atan2(dy, dx));
+            if (angleDiff(angleToEnemy, facingAngle) <= half) {
+                e.takeDamage(attack);
+            }
+        }
     }
 
-    /** Минимальная разница между двумя углами (0..180). */
     private float angleDiff(float a, float b) {
         float diff = ((a - b + 180 + 360) % 360) - 180;
         return Math.abs(diff);
     }
 
-    /** Направление взгляда → угол в градусах (0° = вправо, CCW). */
     private float directionToAngle(String dir) {
         switch (dir) {
-            case "up":    return 90f;
-            case "left":  return 180f;
-            case "down":  return 270f;
-            default:      return 0f;   // right
+            case "up":   return 90f;
+            case "left": return 180f;
+            case "down": return 270f;
+            default:     return 0f;
         }
     }
 
@@ -189,21 +193,13 @@ public class Warrior extends Player {
     @Override
     public void render(SpriteBatch batch) {
         Animation<TextureRegion> anim = pickAnimation();
-        float t = isAttacking
-            ? (getAnimDuration() - attackAnimTimer)  // для атак: время с начала
-            : stateTime;                              // для остальных: накопленное время
-
-        // Атаки не зациклены, остальное — зациклено
+        float t    = isAttacking ? (getAnimDuration() - attackAnimTimer) : stateTime;
         boolean loop = !isAttacking;
         batch.draw(anim.getKeyFrame(t, loop), x, y, 128, 128);
     }
 
-    /** Выбирает нужную анимацию по текущему состоянию. */
     private Animation<TextureRegion> pickAnimation() {
-        if (isAttacking) {
-            Animation<TextureRegion> atk = wasRunning ? rAtkByDir() : (wasMoving ? wAtkByDir() : atkByDir());
-            return atk;
-        }
+        if (isAttacking) return wasRunning ? rAtkByDir() : (wasMoving ? wAtkByDir() : atkByDir());
         if (moving && isRunning) return runByDir();
         if (moving)              return walkByDir();
         return idleByDir();
@@ -236,40 +232,69 @@ public class Warrior extends Player {
 
     @Override
     public void renderHUD(SpriteBatch batch, BitmapFont font, float camX, float camY) {
+
+        // ── Позиция HUD (верхний левый угол экрана) ──────────────────────────
+        float left = camX - 390f;
+        float top  = camY + 285f;
+
+        // ── Размеры health bar ────────────────────────────────────────────────
+        float barW    = 220f;
+        float barH    = 18f;
+        float borderW = 2f;
+
+        float ratio = Math.max(0f, (float) hp / maxHp);
+
+        // Цвет заливки: зелёный → жёлтый → красный
+        Color fillColor;
+        if (ratio > 0.5f) {
+            fillColor = new Color(1f - (ratio - 0.5f) * 2f, 1f, 0f, 1f); // зелёный→жёлтый
+        } else {
+            fillColor = new Color(1f, ratio * 2f, 0f, 1f);                // жёлтый→красный
+        }
+
+        // ── Рисуем рамку (тёмный фон немного шире) ───────────────────────────
+        drawRect(batch, Color.BLACK,
+            left - borderW,
+            top - barH - borderW,
+            barW + borderW * 2,
+            barH + borderW * 2);
+
+        // ── Фон бара (тёмно-серый) ────────────────────────────────────────────
+        drawRect(batch, new Color(0.15f, 0.15f, 0.15f, 1f),
+            left, top - barH, barW, barH);
+
+        // ── Заливка по текущему HP ────────────────────────────────────────────
+        if (ratio > 0f) {
+            drawRect(batch, fillColor,
+                left, top - barH, barW * ratio, barH);
+        }
+
+        // ── Текст: HP числами внутри бара ─────────────────────────────────────
+        batch.setColor(Color.WHITE);
+        font.draw(batch,
+            "HP  " + hp + " / " + maxHp,
+            left + 6f,
+            top - 3f);
+
+        // ── Заголовок над баром ───────────────────────────────────────────────
+        font.draw(batch, "Warrior  Lv." + level, left, top + 14f);
+
+        // ── Кулдаун атаки ─────────────────────────────────────────────────────
         float cd = getAttackTimer();
-        String atkText = cd > 0 ? String.format("[F] ATK CD: %.1fs", cd) : "[F] ATTACK READY";
+        String atkText = cd > 0
+            ? String.format("[F]  ATK CD: %.1fs", cd)
+            : "[F]  ATTACK READY";
+        font.draw(batch, atkText, left, top - barH - 10f);
 
-        int maxHp = level == 1 ? 200 : level == 2 ? 250 : 300;
-        float ratio = (float) hp / maxHp;
+        // Сбрасываем цвет batch обратно в белый (чтобы не ломать другие спрайты)
+        batch.setColor(Color.WHITE);
+    }
 
-        // Рисуем бар через ShapeRenderer
-        batch.end();
-        ShapeRenderer sr = new ShapeRenderer();
-        sr.setProjectionMatrix(batch.getProjectionMatrix());
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        sr.begin(ShapeRenderer.ShapeType.Filled);
-
-        // Фон бара (серый)
-        sr.setColor(0.3f, 0.3f, 0.3f, 1f);
-        sr.rect(camX - 380, camY + 258, 200, 16);
-
-        // Заполнение бара (красный)
-        sr.setColor(0.9f, 0.1f, 0.1f, 1f);
-        sr.rect(camX - 380, camY + 258, 200 * ratio, 16);
-
-        sr.end();
-        sr.dispose();
-        Gdx.gl.glDisable(GL20.GL_BLEND);
-        batch.begin();
-
-        // Текст уровня — над баром
-        font.draw(batch, "Warrior Lv." + level, camX - 380, camY + 300);
-
-        // HP текст — поверх бара
-        font.draw(batch, hp + " / " + maxHp, camX - 300, camY + 278);
-
-        // Текст атаки — под баром
-        font.draw(batch, atkText, camX - 380, camY + 250);
+    /** Рисует закрашенный прямоугольник через 1×1 пиксель. */
+    private void drawRect(SpriteBatch batch, Color color, float x, float y, float w, float h) {
+        batch.setColor(color);
+        batch.draw(pixel, x, y, w, h);
+        batch.setColor(Color.WHITE);
     }
 
     @Override
@@ -277,8 +302,6 @@ public class Warrior extends Player {
         float cx = x + 64, cy = y + 64;
         float facing = directionToAngle(direction);
         float startAngle = facing - sectorAngle / 2f;
-
-        // Полупрозрачная заливка сектора
         sr.setColor(1f, 0.3f, 0.3f, 0.25f);
         sr.arc(cx, cy, attackRadius, startAngle, sectorAngle, 32);
     }
@@ -297,23 +320,6 @@ public class Warrior extends Player {
     @Override
     public void dispose() {
         disposeSheets();
-    }
-
-    private void applyAttackDamage(List<EnemyAbstract> enemies) {
-        float cx = x + 64, cy = y + 64;
-        float facingAngle = directionToAngle(direction);
-        float half = sectorAngle / 2f;
-
-        for (EnemyAbstract e : enemies) {
-            float ex = e.getHitbox().x + 64, ey = e.getHitbox().y + 64;
-            float dx = ex - cx, dy = ey - cy;
-            float dist = (float) Math.sqrt(dx * dx + dy * dy);
-            if (dist > attackRadius) continue;
-
-            float angleToEnemy = (float) Math.toDegrees(Math.atan2(dy, dx));
-            if (angleDiff(angleToEnemy, facingAngle) <= half) {
-                e.takeDamage(attack);
-            }
-        }
+        if (pixel != null) pixel.dispose();
     }
 }
