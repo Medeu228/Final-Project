@@ -49,6 +49,8 @@ public abstract class EnemyAbstract {
     protected boolean isAttacking     = false;
     protected float   attackAnimTimer = 0f;
     protected float   attackAnimDuration = 0f; // задаётся подклассом
+    protected boolean hitPending     = false;   // ← добавь
+    protected Player  pendingTarget;
 
     public EnemyAbstract(float x, float y) {
         this.x = x;
@@ -73,6 +75,15 @@ public abstract class EnemyAbstract {
         // Обратный отсчёт анимации атаки
         if (attackAnimTimer > 0) {
             attackAnimTimer -= delta;
+
+            // Урон в середине анимации
+            if (hitPending && attackAnimTimer <= attackAnimDuration / 2f) {
+                hitPending = false;
+                if (pendingTarget != null) {
+                    pendingTarget.takeDamage(attack);
+                }
+            }
+
             if (attackAnimTimer <= 0) isAttacking = false;
         }
 
@@ -110,11 +121,15 @@ public abstract class EnemyAbstract {
         float dist = (float) Math.sqrt((ex - px) * (ex - px) + (ey - py) * (ey - py));
 
         if (dist <= MELEE_RANGE && attackTimer <= 0) {
-            player.takeDamage(attack);
             attackTimer = attackCooldown;
             if (attackAnimDown != null) {
                 isAttacking     = true;
                 attackAnimTimer = attackAnimDuration;
+                hitPending      = true;
+                pendingTarget   = player;
+            } else {
+                // если анимации нет — наносим сразу
+                player.takeDamage(attack);
             }
             return true;
         }
