@@ -11,6 +11,9 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import medeus.finalproject.Entities.EnemyAbstract;
 import medeus.finalproject.Entities.Player;
 import java.util.List;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public class Warrior extends Player {
 
@@ -40,6 +43,9 @@ public class Warrior extends Player {
     private boolean wasRunning   = false;  // бежал ли в момент атаки
 
     private float attackAnimTimer = 0f;
+    private boolean hitPending   = false;
+    private float   hitDelayTimer = 0f;
+    private List<EnemyAbstract> pendingEnemies;
 
     // Длительности анимаций = кол-во фреймов × время фрейма
     private static final float DUR_ATK       = 8 * 0.10f;  // 0.80с
@@ -127,9 +133,20 @@ public class Warrior extends Player {
     public void update(float delta) {
         super.update(delta);  // движение, кулдаун атаки, hitbox
         isRunning = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
+
+        // Таймер длительности анимации атаки (это было раньше, его потеряли!)
         if (attackAnimTimer > 0) {
             attackAnimTimer -= delta;
             if (attackAnimTimer <= 0) isAttacking = false;
+        }
+
+        // Таймер задержки урона
+        if (hitPending && hitDelayTimer > 0) {
+            hitDelayTimer -= delta;
+            if (hitDelayTimer <= 0) {
+                hitPending = false;
+                applyAttackDamage(pendingEnemies);
+            }
         }
     }
 
@@ -140,27 +157,15 @@ public class Warrior extends Player {
         if (!canAttack()) return;
         attackTimer = attackCooldown;
 
-        wasMoving   = moving;
-        wasRunning  = isRunning;
+        wasMoving  = moving;
+        wasRunning = isRunning;
         isAttacking = true;
         attackAnimTimer = wasRunning ? DUR_RUN_ATK : (wasMoving ? DUR_WALK_ATK : DUR_ATK);
 
-        float cx = x + 64, cy = y + 64;
-        float facingAngle = directionToAngle(direction);
-        float half = sectorAngle / 2f;
-
-        for (EnemyAbstract e : enemies) {
-            float ex = e.getHitbox().x + 64, ey = e.getHitbox().y + 64;
-            float dx = ex - cx, dy = ey - cy;
-            float dist = (float) Math.sqrt(dx * dx + dy * dy);
-            if (dist > attackRadius) continue;
-
-            // Угол до врага (стандартная математика: 0° = вправо, CCW)
-            float angleToEnemy = (float) Math.toDegrees(Math.atan2(dy, dx));
-            if (angleDiff(angleToEnemy, facingAngle) <= half) {
-                e.takeDamage(attack);
-            }
-        }
+        // Задержка урона до середины анимации (фрейм 4 из 8)
+        hitDelayTimer = wasRunning ? (4 * 0.08f) : (wasMoving ? (3 * 0.10f) : (4 * 0.10f));
+        hitPending    = true;
+        pendingEnemies = enemies;
     }
 
     /** Минимальная разница между двумя углами (0..180). */
@@ -233,7 +238,37 @@ public class Warrior extends Player {
     public void renderHUD(SpriteBatch batch, BitmapFont font, float camX, float camY) {
         float cd = getAttackTimer();
         String atkText = cd > 0 ? String.format("[F] ATK CD: %.1fs", cd) : "[F] ATTACK READY";
-        font.draw(batch, "Warrior Lv." + level + " | HP: " + hp, camX - 380, camY + 280);
+
+        int maxHp = level == 1 ? 200 : level == 2 ? 250 : 300;
+        float ratio = (float) hp / maxHp;
+
+        // Рисуем бар через ShapeRenderer
+        batch.end();
+        ShapeRenderer sr = new ShapeRenderer();
+        sr.setProjectionMatrix(batch.getProjectionMatrix());
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        sr.begin(ShapeRenderer.ShapeType.Filled);
+
+        // Фон бара (серый)
+        sr.setColor(0.3f, 0.3f, 0.3f, 1f);
+        sr.rect(camX - 380, camY + 258, 200, 16);
+
+        // Заполнение бара (красный)
+        sr.setColor(0.9f, 0.1f, 0.1f, 1f);
+        sr.rect(camX - 380, camY + 258, 200 * ratio, 16);
+
+        sr.end();
+        sr.dispose();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+        batch.begin();
+
+        // Текст уровня — над баром
+        font.draw(batch, "Warrior Lv." + level, camX - 380, camY + 300);
+
+        // HP текст — поверх бара
+        font.draw(batch, hp + " / " + maxHp, camX - 300, camY + 278);
+
+        // Текст атаки — под баром
         font.draw(batch, atkText, camX - 380, camY + 250);
     }
 
@@ -262,5 +297,23 @@ public class Warrior extends Player {
     @Override
     public void dispose() {
         disposeSheets();
+    }
+
+    private void applyAttackDamage(List<EnemyAbstract> enemies) {
+        float cx = x + 64, cy = y + 64;
+        float facingAngle = directionToAngle(direction);
+        float half = sectorAngle / 2f;
+
+        for (EnemyAbstract e : enemies) {
+            float ex = e.getHitbox().x + 64, ey = e.getHitbox().y + 64;
+            float dx = ex - cx, dy = ey - cy;
+            float dist = (float) Math.sqrt(dx * dx + dy * dy);
+            if (dist > attackRadius) continue;
+
+            float angleToEnemy = (float) Math.toDegrees(Math.atan2(dy, dx));
+            if (angleDiff(angleToEnemy, facingAngle) <= half) {
+                e.takeDamage(attack);
+            }
+        }
     }
 }
