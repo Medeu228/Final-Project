@@ -124,29 +124,26 @@ public class OverWorld {
                 boulderX = new float[BOULDER_COUNT]; boulderY = new float[BOULDER_COUNT];
                 placed = placeObjects(boulderX, boulderY, BOULDER_COUNT, 150f, rng, allX, allY, placed);
 
-                // Строим хитбоксы коллизий
-                // Валун — загружаем сохранённый offset если есть
+                // Строим хитбоксы коллизий — грузим из preferences (те же ключи что и devScreen)
                 com.badlogic.gdx.Preferences prefs =
                     Gdx.app.getPreferences("collision_settings");
-                float savedBOX = prefs.getFloat("bOX", 0f);
-                float savedBOY = prefs.getFloat("bOY", 0f);
-                float savedBW  = prefs.getFloat("bW",  BOULDER_RENDER_SIZE);
-                float savedBH  = prefs.getFloat("bH",  BOULDER_RENDER_SIZE);
 
+                // Валун — ключи b_x1/b_y1/b_x2/b_y2
+                float b_x1 = prefs.getFloat("b_x1", 0f);
+                float b_y1 = prefs.getFloat("b_y1", 0f);
+                float b_x2 = prefs.getFloat("b_x2", BOULDER_RENDER_SIZE);
+                float b_y2 = prefs.getFloat("b_y2", BOULDER_RENDER_SIZE);
                 for (int i = 0; i < BOULDER_COUNT; i++) {
                     collisionRects.add(new Rectangle(
-                        boulderX[i] + savedBOX,
-                        boulderY[i] + savedBOY,
-                        savedBW, savedBH
+                        boulderX[i] + b_x1, boulderY[i] + b_y1,
+                        b_x2 - b_x1,        b_y2 - b_y1
                     ));
                 }
-                // Дерево — ствол с загрузкой из preferences
-                com.badlogic.gdx.Preferences treePrefs =
-                    Gdx.app.getPreferences("collision_settings");
-                float t_x1 = treePrefs.getFloat("t_x1", TRUNK_OFFSET_X);
-                float t_y1 = treePrefs.getFloat("t_y1", TRUNK_OFFSET_Y);
-                float t_x2 = treePrefs.getFloat("t_x2", TRUNK_OFFSET_X + TRUNK_W);
-                float t_y2 = treePrefs.getFloat("t_y2", TRUNK_OFFSET_Y + TRUNK_H);
+                // Дерево — ключи t_x1/t_y1/t_x2/t_y2
+                float t_x1 = prefs.getFloat("t_x1", TRUNK_OFFSET_X);
+                float t_y1 = prefs.getFloat("t_y1", TRUNK_OFFSET_Y);
+                float t_x2 = prefs.getFloat("t_x2", TRUNK_OFFSET_X + TRUNK_W);
+                float t_y2 = prefs.getFloat("t_y2", TRUNK_OFFSET_Y + TRUNK_H);
                 for (int i = 0; i < TREE_COUNT; i++) {
                     collisionRects.add(new Rectangle(
                         treeX[i] + t_x1, treeY[i] + t_y1,
@@ -264,13 +261,26 @@ public class OverWorld {
         treeX[1] = x; treeY[1] = y; treeType[1] = 1;
         for (int i = 2; i < TREE_COUNT; i++) { treeX[i] = -500f; treeY[i] = -500f; }
 
-        // Пересчитываем коллизии под новые позиции
+        // Загружаем сохранённые значения коллизий из preferences
+        com.badlogic.gdx.Preferences prefs = Gdx.app.getPreferences("collision_settings");
+        float b_x1 = prefs.getFloat("b_x1", 0f);
+        float b_y1 = prefs.getFloat("b_y1", 0f);
+        float b_x2 = prefs.getFloat("b_x2", BOULDER_RENDER_SIZE);
+        float b_y2 = prefs.getFloat("b_y2", BOULDER_RENDER_SIZE);
+        float t_x1 = prefs.getFloat("t_x1", TRUNK_OFFSET_X);
+        float t_y1 = prefs.getFloat("t_y1", TRUNK_OFFSET_Y);
+        float t_x2 = prefs.getFloat("t_x2", TRUNK_OFFSET_X + TRUNK_W);
+        float t_y2 = prefs.getFloat("t_y2", TRUNK_OFFSET_Y + TRUNK_H);
+
+        // Коллизии с учётом сохранённых offset'ов
         collisionRects.add(new Rectangle(
-            boulderX[0], boulderY[0], BOULDER_RENDER_SIZE, BOULDER_RENDER_SIZE
+            boulderX[0] + b_x1, boulderY[0] + b_y1,
+            b_x2 - b_x1,        b_y2 - b_y1
         ));
         for (int i = 0; i < 2; i++) {
             collisionRects.add(new Rectangle(
-                treeX[i] + TRUNK_OFFSET_X, treeY[i] + TRUNK_OFFSET_Y, TRUNK_W, TRUNK_H
+                treeX[i] + t_x1, treeY[i] + t_y1,
+                t_x2 - t_x1,     t_y2 - t_y1
             ));
         }
     }

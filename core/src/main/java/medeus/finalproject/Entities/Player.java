@@ -42,13 +42,17 @@ public abstract class Player {
         this.y = y;
         loadStats();
         loadAnimation();
-        // Загружаем сохранённые параметры хитбокса
+        // Загружаем сохранённые параметры хитбокса (ключи совпадают с devScreen)
         com.badlogic.gdx.Preferences prefs =
             com.badlogic.gdx.Gdx.app.getPreferences("collision_settings");
-        hitboxOffsetX = prefs.getFloat("pOX", 0f);
-        hitboxOffsetY = prefs.getFloat("pOY", 0f);
-        hitboxW       = prefs.getFloat("pW",  128f);
-        hitboxH       = prefs.getFloat("pH",  128f);
+        float p_x1 = prefs.getFloat("p_x1", 0f);
+        float p_y1 = prefs.getFloat("p_y1", 0f);
+        float p_x2 = prefs.getFloat("p_x2", 128f);
+        float p_y2 = prefs.getFloat("p_y2", 128f);
+        hitboxOffsetX = p_x1;
+        hitboxOffsetY = p_y1;
+        hitboxW       = p_x2 - p_x1;
+        hitboxH       = p_y2 - p_y1;
         hitbox = new Rectangle(x + hitboxOffsetX, y + hitboxOffsetY, hitboxW, hitboxH);
     }
 
