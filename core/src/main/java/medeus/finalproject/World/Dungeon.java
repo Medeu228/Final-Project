@@ -12,7 +12,7 @@ public class Dungeon {
     private static final int   TILE_ROWS = 4;
     private static final float TILE_W    = MAP_SIZE / TILE_COLS; // 400px
     private static final float TILE_H    = MAP_SIZE / TILE_ROWS; // 400px
-    private static final int   SEAM_W    = 20;      // ширина заплатки в px
+    private static final int   SEAM_W    = 1;      // ширина заплатки в px
 
     private Texture floor;
     private Texture seamV;  // вертикальная заплатка (для стыков по X)

@@ -7,7 +7,6 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -19,16 +18,20 @@ import medeus.finalproject.Entities.Heroes.Warrior;
 import medeus.finalproject.Entities.Player;
 import medeus.finalproject.World.OverWorld;
 import medeus.finalproject.World.SpawnTrigger;
-import medeus.finalproject.Entities.Items.HealingItem;
-import java.util.Iterator;
 
 public class GameScreen implements Screen {
 
     private static final float MAP_WIDTH  = 1600f;
     private static final float MAP_HEIGHT = 1600f;
 
-    private static final int[]   ENEMY_COUNT = { 0, 10, 20, 30 };
-    private static final float[] DIFF_SCALE  = { 0, 1.0f, 1.2f, 1.4f };
+    // Кол-во врагов на уровень
+    private static final int[] ENEMY_COUNT = { 0, 8, 15, 25 };
+
+    // Множитель характеристик врагов (HP и ATK)
+    private static final float[] STAT_SCALE  = { 0f, 1.0f, 1.6f, 2.4f };
+
+    // Множитель скорости врагов
+    private static final float[] SPEED_SCALE = { 0f, 1.0f, 1.25f, 1.5f };
 
     private Main game;
     private int level;
@@ -46,12 +49,6 @@ public class GameScreen implements Screen {
     private OverWorld overWorld;
     private SpawnTrigger spawnTrigger;
 
-    private Texture heartTexture;
-    private ArrayList<HealingItem> healingItems;
-    private float heartSpawnTimer = 0f;
-    private static final float HEART_SPAWN_INTERVAL = 15f;
-    private static final int MAX_HEARTS = 3;
-
     public GameScreen(Main game, int level) {
         this.game  = game;
         this.level = level;
@@ -68,16 +65,11 @@ public class GameScreen implements Screen {
         random  = new Random();
 
         overWorld = new OverWorld(level);
-        heartTexture = new Texture("heart.png");
-        healingItems = new ArrayList<>();
-
-        // Создаём Warrior нужного уровня сразу
-        player = new Warrior(100, 100, level);
+        player    = new Warrior(100, 100, level);
 
         if (level == 1) {
             spawnTrigger = new SpawnTrigger(MAP_WIDTH, MAP_HEIGHT);
         } else {
-            // Уровни 2 и 3 — враги спавнятся сразу
             spawnEnemies();
             waveStarted = true;
         }
@@ -88,6 +80,7 @@ public class GameScreen implements Screen {
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // ── Game Over ──────────────────────────────────────────────────────────
         if (gameOver) {
             Gdx.gl.glClearColor(0.3f, 0, 0, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -103,6 +96,7 @@ public class GameScreen implements Screen {
             return;
         }
 
+        // ── Level Complete ─────────────────────────────────────────────────────
         if (waveStarted && enemies.isEmpty()) {
             Gdx.gl.glClearColor(0, 0.3f, 0, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -128,15 +122,9 @@ public class GameScreen implements Screen {
             return;
         }
 
+        // ── Gameplay ───────────────────────────────────────────────────────────
         player.update(delta);
-        // Спавн сердечек каждые 15 секунд
-        heartSpawnTimer += delta;
-        if (heartSpawnTimer >= HEART_SPAWN_INTERVAL && healingItems.size() < MAX_HEARTS) {
-            spawnHearts(1);
-            heartSpawnTimer = 0f;
-        }
 
-        // Уровень 1: активация волны через SpawnTrigger
         if (level == 1 && spawnTrigger != null && !waveStarted) {
             if (spawnTrigger.checkActivation(player.getX(), player.getY())) {
                 spawnEnemies();
@@ -155,18 +143,15 @@ public class GameScreen implements Screen {
             return;
         }
 
-        float halfW = camera.viewportWidth / 2f;   // = 400
-        float halfH = camera.viewportHeight / 2f;  // = 300
-
-        float targetX = player.getX() + 64f;  // центр спрайта 128px
-        float targetY = player.getY() + 64f;  // центр спрайта 128px
-
-        float camX = Math.max(halfW, Math.min(targetX, MAP_WIDTH  - halfW));
-        float camY = Math.max(halfH, Math.min(targetY, MAP_HEIGHT - halfH));
-
+        // Камера следует за игроком, но не выходит за границы карты
+        float halfW = camera.viewportWidth  / 2f;
+        float halfH = camera.viewportHeight / 2f;
+        float camX  = Math.max(halfW,  Math.min(player.getX(), MAP_WIDTH  - halfW));
+        float camY  = Math.max(halfH,  Math.min(player.getY(), MAP_HEIGHT - halfH));
         camera.position.set(camX, camY, 0);
         camera.update();
 
+        // Сектор атаки
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         shapeRenderer.setProjectionMatrix(camera.combined);
@@ -175,10 +160,11 @@ public class GameScreen implements Screen {
         shapeRenderer.end();
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
+        // Рендер мира и сущностей
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        overWorld.render(batch);
+        overWorld.renderBackground(batch);  // фон + трава
 
         if (level == 1 && spawnTrigger != null) {
             spawnTrigger.render(batch, font, player.getX(), player.getY());
@@ -191,15 +177,6 @@ public class GameScreen implements Screen {
         }
 
         player.render(batch);
-        Iterator<HealingItem> it = healingItems.iterator();
-        while (it.hasNext()) {
-            HealingItem heart = it.next();
-            heart.render(batch);
-            if (heart.checkPickup(player.getHitbox())) {
-                player.heal(heart.getHealAmount());
-                it.remove();
-            }
-        }
 
         for (EnemyAbstract enemy : enemies) {
             enemy.update(delta, player.getX(), player.getY());
@@ -207,12 +184,15 @@ public class GameScreen implements Screen {
             enemy.render(batch);
         }
 
+        overWorld.renderObjects(batch);  // деревья, кусты, валуны — поверх всех
+
         batch.end();
     }
 
     private void spawnEnemies() {
-        int count   = ENEMY_COUNT[level];
-        float scale = DIFF_SCALE[level];
+        int   count      = ENEMY_COUNT[level];
+        float statScale  = STAT_SCALE[level];
+        float speedScale = SPEED_SCALE[level];
 
         for (int i = 0; i < count; i++) {
             float x, y;
@@ -225,7 +205,7 @@ public class GameScreen implements Screen {
                 ? new Zombie(x, y)
                 : new Skeleton(x, y);
 
-            enemy.applyDifficultyScale(scale);
+            enemy.applyDifficultyScale(statScale);
             enemies.add(enemy);
         }
     }
@@ -238,7 +218,6 @@ public class GameScreen implements Screen {
         shapeRenderer.dispose();
         overWorld.dispose();
         if (spawnTrigger != null) spawnTrigger.dispose();
-        heartTexture.dispose();
     }
 
     @Override public void show() {}
@@ -246,12 +225,4 @@ public class GameScreen implements Screen {
     @Override public void pause() {}
     @Override public void resume() {}
     @Override public void hide() {}
-
-    private void spawnHearts(int count) {
-        for (int i = 0; i < count; i++) {
-            float x = 100 + random.nextFloat() * 1400;
-            float y = 100 + random.nextFloat() * 1400;
-            healingItems.add(new HealingItem(x, y, heartTexture));
-        }
-    }
 }
