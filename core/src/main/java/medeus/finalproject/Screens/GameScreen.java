@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import medeus.finalproject.Main;
+import medeus.finalproject.Entities.Enemies.Necromancer;
 import medeus.finalproject.Entities.Enemies.Skeleton;
 import medeus.finalproject.Entities.Enemies.Zombie;
 import medeus.finalproject.Entities.EnemyAbstract;
@@ -21,6 +22,7 @@ import medeus.finalproject.World.OverWorld;
 import medeus.finalproject.World.SpawnTrigger;
 import medeus.finalproject.Entities.Items.HealingItem;
 import java.util.Iterator;
+import java.util.List;
 
 public class GameScreen implements Screen {
 
@@ -42,6 +44,8 @@ public class GameScreen implements Screen {
     private boolean gameOver = false;
     private BitmapFont font;
     private ShapeRenderer shapeRenderer;
+
+    private Necromancer boss;
 
     private OverWorld overWorld;
     private SpawnTrigger spawnTrigger;
@@ -172,6 +176,26 @@ public class GameScreen implements Screen {
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         player.renderAttackRange(shapeRenderer);
+
+        if (level == 3 && boss != null && boss.isAlive()) {
+            float barW = 400f, barH = 20f;
+            float barX = camera.position.x - barW / 2f;
+            float barY = camera.position.y + 264f;
+
+            // рамка
+            shapeRenderer.setColor(0.05f, 0.05f, 0.05f, 0.9f);
+            shapeRenderer.rect(barX - 2, barY - 2, barW + 4, barH + 4);
+            // фон
+            shapeRenderer.setColor(0.2f, 0.2f, 0.2f, 0.85f);
+            shapeRenderer.rect(barX, barY, barW, barH);
+            // заполнение (цвет по фазе)
+            float ratio = Math.max(0f, (float) boss.getHp() / boss.getMaxHp());
+            if      (ratio > 0.6f) shapeRenderer.setColor(0.1f, 0.75f, 0.1f, 1f);
+            else if (ratio > 0.3f) shapeRenderer.setColor(1f,   0.65f, 0f,   1f);
+            else                   shapeRenderer.setColor(0.85f, 0.1f, 0.1f, 1f);
+            shapeRenderer.rect(barX, barY, barW * ratio, barH);
+        }
+
         shapeRenderer.end();
         Gdx.gl.glDisable(GL20.GL_BLEND);
 
@@ -190,6 +214,11 @@ public class GameScreen implements Screen {
             font.draw(batch, "Enemies: " + enemies.size(), camera.position.x + 200, camera.position.y + 250);
         }
 
+        if (level == 3 && boss != null && boss.isAlive()) {
+            font.draw(batch, "НЕКРОМАНТ   " + boss.getHp() + " / " + boss.getMaxHp(),
+                      camera.position.x - 90f, camera.position.y + 293f);
+        }
+
         player.render(batch);
         Iterator<HealingItem> it = healingItems.iterator();
         while (it.hasNext()) {
@@ -201,7 +230,8 @@ public class GameScreen implements Screen {
             }
         }
 
-        for (EnemyAbstract enemy : enemies) {
+        List<EnemyAbstract> snapshot = new ArrayList<>(enemies);
+        for (EnemyAbstract enemy : snapshot) {
             enemy.update(delta, player.getX(), player.getY());
             enemy.tryAttackPlayer(player);
             enemy.render(batch);
@@ -211,6 +241,13 @@ public class GameScreen implements Screen {
     }
 
     private void spawnEnemies() {
+        if (level == 3) {
+            boss = new Necromancer(MAP_WIDTH / 2f - 64, MAP_HEIGHT / 2f - 64);
+            boss.setEnemyList(enemies);
+            enemies.add(boss);
+            return;
+        }
+
         int count   = ENEMY_COUNT[level];
         float scale = DIFF_SCALE[level];
 

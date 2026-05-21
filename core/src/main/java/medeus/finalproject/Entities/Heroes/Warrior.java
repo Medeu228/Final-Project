@@ -254,27 +254,27 @@ public class Warrior extends Player {
 
         // ── Рисуем рамку (тёмный фон немного шире) ───────────────────────────
         drawRect(batch, Color.BLACK,
-            left - borderW,
-            top - barH - borderW,
-            barW + borderW * 2,
-            barH + borderW * 2);
+                left - borderW,
+                top - barH - borderW,
+                barW + borderW * 2,
+                barH + borderW * 2);
 
         // ── Фон бара (тёмно-серый) ────────────────────────────────────────────
         drawRect(batch, new Color(0.15f, 0.15f, 0.15f, 1f),
-            left, top - barH, barW, barH);
+                left, top - barH, barW, barH);
 
         // ── Заливка по текущему HP ────────────────────────────────────────────
         if (ratio > 0f) {
             drawRect(batch, fillColor,
-                left, top - barH, barW * ratio, barH);
+                    left, top - barH, barW * ratio, barH);
         }
 
         // ── Текст: HP числами внутри бара ─────────────────────────────────────
         batch.setColor(Color.WHITE);
         font.draw(batch,
-            "HP  " + hp + " / " + maxHp,
-            left + 6f,
-            top - 3f);
+                "HP  " + hp + " / " + maxHp,
+                left + 6f,
+                top - 3f);
 
         // ── Заголовок над баром ───────────────────────────────────────────────
         font.draw(batch, "Warrior  Lv." + level, left, top + 14f);
@@ -282,8 +282,8 @@ public class Warrior extends Player {
         // ── Кулдаун атаки ─────────────────────────────────────────────────────
         float cd = getAttackTimer();
         String atkText = cd > 0
-            ? String.format("[F]  ATK CD: %.1fs", cd)
-            : "[F]  ATTACK READY";
+                ? String.format("[F]  ATK CD: %.1fs", cd)
+                : "[F]  ATTACK READY";
         font.draw(batch, atkText, left, top - barH - 10f);
 
         // Сбрасываем цвет batch обратно в белый (чтобы не ломать другие спрайты)
