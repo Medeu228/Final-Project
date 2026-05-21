@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Rectangle;
 import medeus.finalproject.Main;
 import medeus.finalproject.Entities.Enemies.Skeleton;
 import medeus.finalproject.Entities.Enemies.Zombie;
@@ -124,6 +125,7 @@ public class GameScreen implements Screen {
 
         // ── Gameplay ───────────────────────────────────────────────────────────
         player.update(delta);
+        resolveCollisions(player);
 
         if (level == 1 && spawnTrigger != null && !waveStarted) {
             if (spawnTrigger.checkActivation(player.getX(), player.getY())) {
@@ -170,12 +172,6 @@ public class GameScreen implements Screen {
             spawnTrigger.render(batch, font, player.getX(), player.getY());
         }
 
-        player.renderHUD(batch, font, camera.position.x, camera.position.y);
-        font.draw(batch, "Level: " + level, camera.position.x + 200, camera.position.y + 280);
-        if (waveStarted) {
-            font.draw(batch, "Enemies: " + enemies.size(), camera.position.x + 200, camera.position.y + 250);
-        }
-
         player.render(batch);
 
         for (EnemyAbstract enemy : enemies) {
@@ -184,9 +180,43 @@ public class GameScreen implements Screen {
             enemy.render(batch);
         }
 
-        overWorld.renderObjects(batch);  // деревья, кусты, валуны — поверх всех
+        overWorld.renderObjects(batch);  // деревья, кусты, валуны
+
+        // HUD — последним, поверх всех объектов
+        player.renderHUD(batch, font, camera.position.x, camera.position.y);
+        font.draw(batch, "Level: " + level, camera.position.x + 200, camera.position.y + 280);
+        if (waveStarted) {
+            font.draw(batch, "Enemies: " + enemies.size(), camera.position.x + 200, camera.position.y + 250);
+        }
 
         batch.end();
+    }
+
+    /**
+     * Выталкивает игрока из коллизионных прямоугольников мира.
+     * Двигаем по наименьшей оси пересечения (стандартный AABB push-out).
+     */
+    private void resolveCollisions(Player player) {
+        if (level != 1) return;
+        Rectangle pb = player.getHitbox();
+        float ox = player.getHitboxOffsetX();
+        float oy = player.getHitboxOffsetY();
+        for (Rectangle rect : overWorld.getCollisionRects()) {
+            if (!pb.overlaps(rect)) continue;
+            float overlapLeft   = (pb.x + pb.width)     - rect.x;
+            float overlapRight  = (rect.x + rect.width)  - pb.x;
+            float overlapBottom = (pb.y + pb.height)     - rect.y;
+            float overlapTop    = (rect.y + rect.height) - pb.y;
+            float minX = Math.min(overlapLeft, overlapRight);
+            float minY = Math.min(overlapBottom, overlapTop);
+            if (minX < minY) {
+                if (overlapLeft < overlapRight) player.setX(rect.x - pb.width  - ox);
+                else                            player.setX(rect.x + rect.width - ox);
+            } else {
+                if (overlapBottom < overlapTop) player.setY(rect.y - pb.height - oy);
+                else                            player.setY(rect.y + rect.height - oy);
+            }
+        }
     }
 
     private void spawnEnemies() {
